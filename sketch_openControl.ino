@@ -1,6 +1,6 @@
 
 /*
- *  This is the openStackmatchControl for the remoteQth.com Stackmatch-Version
+ *  This is the openControl for the remoteQth.com
  *  If you need help, feel free to contact DM5XX@gmx.de
  *  Sketch is developed with IDE Version 1.6.4 and later
  *
@@ -130,37 +130,39 @@ int DS_pin = 5;
 int STCP_pin = 3;
 int SHCP_pin = 7;
 volatile boolean isTxMode = false;
+volatile boolean isTxMode_old = false;
 volatile boolean isTxModeSet = false;
 volatile boolean isRxModeSet = false;
 long debouncing_time = 10;
 volatile unsigned long last_millis;
 unsigned long pushDog = 0;
-volatile unsigned long pttDog = 0;
-volatile unsigned long pttDogTime = 0; // this is sort of anti-qsk-logic... the lower the value, the faster the response. Set you value for the threshold only if ur txrx has not threshold time for anti-qsk.
 
 int buttonPin = 0;
 byte oldButton = 0;
 boolean inTxEditMode = false;
 byte oldTxEditMode = 0;
 
-int leadIn = 15;
+int leadIn = 10;
 int leadOut = 20;
 
 byte currentButton;
 byte readTxEditMode;
 
+boolean isInterruptDetached = false;
+
 //////////////////////////////////////////////// Main Setup //////////////////////////////////////////////////////////////
 
 void setup()
 {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   setupPinMode();
   setupDigitalWrites();
   setupLCD();
   setupRegisters();
   Ethernet.begin(mac, ip); // Client starten
   //Serial.print("server is at ");
-  //Serial.println(Ethernet.localIP());  
+  //Serial.println(Ethernet.localIP());
+  attachInterrupt(0, setInterruptTxMode, FALLING);
 }
 
 void setupDigitalWrites()
@@ -209,29 +211,20 @@ void setupLCD()
 void loop()
 {
   ///////////////////// PTT CONTROL SECTION /////////////////////////
-  debouncePtt();
+  debouncePtt(); // txptt is handled by interrupt, but from time to time it fails. this is handled inside debouncePtt();
 
-  // this is handling the status change from tx to rx and from rx to tx... The setup methods contain the switching delays and logic
   if (isTxMode)
   {
 	  if (!isTxModeSet)
 	  {
-		  delay(leadIn); // this is leadin - comment it out and see 100us
-		  digitalWrite(ptt_OutPin, HIGH);
-
-		  isRxModeSet = false;
-		  isTxModeSet = true;
-		  if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
-		  {
-			  removeStars(true);
-			  setStar(registersTx, true);
-		  }
+		  Serial.println("ptt fire");
+		  triggerPttWorkflow();
 	  }
   }
   else
   {
-	if (!isRxModeSet && millis() - pttDog > pttDogTime)
-    {
+	if (!isRxModeSet)
+	{
       receiving(); // set outupt pins
       setRxSetup(); // handle rx delay
       isRxModeSet = true;
@@ -243,48 +236,50 @@ void loop()
   
   ///////////////////// BUTTON SECTION /////////////////////////    
   // here comes the TX-Mode-Button logic
-  if (!isTxMode)
-  {
-	  if (readTxEditMode == 0 && readTxEditMode != oldTxEditMode)
-	  {
+	if (!isTxMode && readTxEditMode == 0 && readTxEditMode != oldTxEditMode)
+	{
 		if (inTxEditMode)
 		{
-		  inTxEditMode = false;
-		  switchArrow(false);
-		  digitalWrite(txModeLedPin, HIGH);
-		  writeDisplayRegister(registersRx);
-		  writeRelayRegister(registersRx);
+			inTxEditMode = false;
+			switchArrow(false);
+			digitalWrite(txModeLedPin, HIGH);
+			writeDisplayRegister(registersRx);
+			writeRelayRegister(registersRx);
 		}
 		else                                               // else go to the tx-edit
 		{
-		  inTxEditMode = true;
-		  switchArrow(true);
-		  digitalWrite(txModeLedPin, LOW);
-		  writeDisplayRegister(registersTx);
-		  writeRelayRegister(registersTx);
+			inTxEditMode = true;
+			switchArrow(true);
+			digitalWrite(txModeLedPin, LOW);
+			writeDisplayRegister(registersTx);
+			writeRelayRegister(registersTx);
 		}
-	  }
+	}
 
-	  // here comes the button logic
-	  if (!isTxMode && currentButton > 0 && currentButton != oldButton && oldButton == 0 && (long)(millis() - pushDog) >= 200)
-	  {
+	// here comes the button logic
+	if (!isTxMode && currentButton > 0 && currentButton != oldButton && oldButton == 0 && (long)(millis() - pushDog) >= 200)
+	{
 		if (inTxEditMode)
 		{
-		  setRegisterArray(currentButton, registersTx);
-		  setDisplayAndRelays(true);
+			setRegisterArray(currentButton, registersTx);
+			setDisplayAndRelays(true);
 		}
 		else
 		{
-		  setRegisterArray(currentButton, registersRx);
-		  setDisplayAndRelays(false);
+			setRegisterArray(currentButton, registersRx);
+			setDisplayAndRelays(false);
 		}
 		pushDog = millis();
-	  }
+	}
+  
+  if (!isTxMode)
+  {
+	  oldButton = currentButton;
+	  oldTxEditMode = readTxEditMode;
+	  webServer();
+	  if (isInterruptDetached)
+		  interrupts();
   }
-  oldButton = currentButton;
-  oldTxEditMode = readTxEditMode;
-  webServer();
-
 }
 
 /*------------------------------------------------------------------------------------------------------------------------*/
@@ -298,7 +293,7 @@ void loop()
 void displayVersion()
 {
   resetDisplay();
-  lcd.print("1.5.2 150711 IP");
+  lcd.print("1.5.3 150711 IP");
   lcd.setCursor(0, 1);
   lcd.print(" OK2ZAW & DM5XX");
 }
@@ -448,12 +443,45 @@ String getStringPartByNr(String data, char separator, int index)
   return dataPart;
 }
 
+// never call delay micros direct in interruptfunction..
+void myDelay(int x)   {
+	for (int i = 0; i <= x; i++)
+	{
+		delayMicroseconds(1000);
+	}
+}
+
 /*------------------------------------------------- PTT --------------------------------------------------------------------------*/
+void setInterruptTxMode()
+{
+	noInterrupts();
+	isInterruptDetached = true;
+	pttTriggerTX();
+	triggerPttWorkflow();
+}
+
+void triggerPttWorkflow()
+{
+	myDelay(leadIn);
+	digitalWrite(ptt_OutPin, HIGH);
+
+	isRxModeSet = false;
+	isTxModeSet = true;
+	if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
+	{
+		removeStars(true);
+		setStar(registersTx, true);
+	}
+}
+
 void debouncePtt() {
-	if ((long)(millis() - last_millis) >= debouncing_time) {
+	if ((long)(millis() - last_millis) >= debouncing_time) { // debounce the standard digitalWrites...
 		isTxMode = !digitalRead(ptt_InPin);
 		if (isTxMode)
-			pttTriggerTX();
+		{
+			if (!isInterruptDetached) // if interrupt is not detached = interrupt function was not called.
+				pttTriggerTX();
+		}
 		else
 			pttTriggerRX();
 		last_millis = millis();
@@ -463,16 +491,19 @@ void debouncePtt() {
 void pttTriggerTX()
 {
 	isTxMode = true;
-	if (!inTxEditMode)
-		writeDisplayRegister(registersTx);		//////////////////
-	writeRelayRegister(registersTx);
-	pttDog = millis();
-	Serial.println("ptt");
+	if (isTxMode != isTxMode_old)
+	{
+		if (!inTxEditMode)
+			writeDisplayRegister(registersTx);		//////////////////
+		writeRelayRegister(registersTx);
+	}
+	isTxMode_old = isTxMode;		
 }
 
 void pttTriggerRX()
 {
 	isTxMode = false;
+	isTxMode_old = false;
 	isRxModeSet = false;
 	isTxModeSet = false;
 }
@@ -480,7 +511,7 @@ void pttTriggerRX()
 // set pins for receiving
 void receiving()
 {
-  //digitalWrite(ptt_InPin, HIGH);
+  digitalWrite(ptt_InPin, HIGH); // set intput to high just to be sure.. :P
   digitalWrite(ptt_OutPin, LOW);
 }
 
