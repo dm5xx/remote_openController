@@ -1,4 +1,4 @@
-# Firmware for openController hardware from remoteQTH.com
+# Firmware for openController hardware from htt://www.remoteQTH.com
 This is the openControl for the remoteQth.com 
 If you need help, feel free to contact DM5XX@gmx.de
 Sketch is developed with IDE Version 1.6.4 and later
