@@ -24,7 +24,7 @@ void setRegisterArray(byte button, boolean regArr[])
 {
   if (!inTxEditMode)                    // im rx mode
   {
-    if (button < 4)                     // only button could be active, except button 4 
+    if (button < 4)                     // only button could be active, except button  4 
     {
       toggleRegisterArray(regArr, 0);
 
