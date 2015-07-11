@@ -23,7 +23,7 @@
 //// set value of the pressed button into the relay register   
 //void setRegisterArray(byte button, boolean regArr[])
 //{
-//   byte checkOne = verifyButtons(regArr, 4);
+//   byte checkOne = verifyButtons(regArr, 4); 
 //
 //   if(checkOne == 1 && button < 4)
 //   {
