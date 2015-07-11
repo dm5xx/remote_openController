@@ -133,6 +133,8 @@ volatile boolean isTxMode = false;
 volatile boolean isTxMode_old = false;
 volatile boolean isTxModeSet = false;
 volatile boolean isRxModeSet = false;
+volatile boolean isRxModeSet_old = false;
+
 long debouncing_time = 10;
 volatile unsigned long last_millis;
 unsigned long pushDog = 0;
@@ -293,7 +295,7 @@ void loop()
 void displayVersion()
 {
   resetDisplay();
-  lcd.print("1.5.3 150711 IP");
+  lcd.print("1.5.3 150712 IP");
   lcd.setCursor(0, 1);
   lcd.print(" OK2ZAW & DM5XX");
 }
@@ -472,6 +474,7 @@ void triggerPttWorkflow()
 		removeStars(true);
 		setStar(registersTx, true);
 	}
+	isRxModeSet_old = false;
 }
 
 void debouncePtt() {
@@ -483,7 +486,8 @@ void debouncePtt() {
 				pttTriggerTX();
 		}
 		else
-			pttTriggerRX();
+			if (isRxModeSet_old != true)
+				pttTriggerRX();
 		last_millis = millis();
 	}
 }
@@ -497,7 +501,7 @@ void pttTriggerTX()
 			writeDisplayRegister(registersTx);		//////////////////
 		writeRelayRegister(registersTx);
 	}
-	isTxMode_old = isTxMode;		
+	isTxMode_old = isTxMode;
 }
 
 void pttTriggerRX()
@@ -506,6 +510,7 @@ void pttTriggerRX()
 	isTxMode_old = false;
 	isRxModeSet = false;
 	isTxModeSet = false;
+	isRxModeSet_old = true; // prevent next debouncePtt call from executing pttTriggerRX, because it was called before..
 }
 
 // set pins for receiving
@@ -520,7 +525,6 @@ void receiving()
 // set the needed relays and display messages for RX
 void setRxSetup()
 {
-  delay(leadOut);			// leadout time
   if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
   {
 	  removeStars(false);
@@ -528,6 +532,7 @@ void setRxSetup()
   }
   if (!inTxEditMode)
     writeDisplayRegister(registersRx);
+  myDelay(leadOut);			// leadout time - wait to release the releays from tx position to rx position
   writeRelayRegister(registersRx);
 }
 
