@@ -16,7 +16,7 @@
 //  resetDisplay();
 //  lcd.print("->RX  T  B  I  O");
 //  lcd.setCursor(0, 1);
-//  lcd.print("  TX  T  B  I  O");
+//  lcd.print("  TX  T  B  I  O"); 
 //}
 //
 //// set value of the pressed button into the relay register     
