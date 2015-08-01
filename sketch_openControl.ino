@@ -46,7 +46,9 @@ EthernetServer server(80);                  //**********************************
 
 boolean registersRx[4] = {1, 0, 0, 0};
 boolean registersTx[4] = {1, 0, 0, 0};
-boolean registersDisplay[4] = {1, 0, 0, 0};
+boolean registersRxLed[4] = { 1, 0, 0, 0 };
+boolean registersTxLed[4] = { 1, 0, 0, 0 };
+boolean registersDisplay[4] = { 1, 0, 0, 0 };
 
 /////////////////////////////////////// WWW Content for PROGMEM ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -189,10 +191,10 @@ void setupPinMode()
 
 void setupRegisters()
 {
-  writeDisplayRegister(registersRx);
+  writeDisplayRegister(registersRxLed);
   writeRelayRegister(registersRx);
-  setStar(registersTx, true);
-  writeDisplayRegister(registersTx);
+  setStar(registersTxLed, true);
+  writeDisplayRegister(registersTxLed);
   writeRelayRegister(registersTx);
 }
 
@@ -206,7 +208,7 @@ void setupLCD()
   displayVersion();
   delay(2000);
   displayMain();
-  setStar(registersRx, false);
+  setStar(registersRxLed, false);
 }
 
 //////////////////////////////////////////////// Main Loop //////////////////////////////////////////////////////////////
@@ -245,7 +247,7 @@ void loop()
 			inTxEditMode = false;
 			switchArrow(false);
 			digitalWrite(txModeLedPin, HIGH);
-			writeDisplayRegister(registersRx);
+			writeDisplayRegister(registersRxLed);
 			writeRelayRegister(registersRx);
 		}
 		else                                               // else go to the tx-edit
@@ -253,7 +255,7 @@ void loop()
 			inTxEditMode = true;
 			switchArrow(true);
 			digitalWrite(txModeLedPin, LOW);
-			writeDisplayRegister(registersTx);
+			writeDisplayRegister(registersTxLed);
 			writeRelayRegister(registersTx);
 		}
 	}
@@ -408,18 +410,20 @@ byte verifyButtons(boolean arri[], byte nrOfButtons)
 
 void setDisplayAndRelays(boolean isTx)
 {
+	setRegisterLed(isTx);
+	Serial.println("called");
 	if (isTx)
 	{
 		removeStars(true);
-		setStar(registersTx, true);
-		writeDisplayRegister(registersTx);
+		setStar(registersTxLed, true);
+		writeDisplayRegister(registersTxLed);
 		writeRelayRegister(registersTx);
 	}
 	else
 	{
 		removeStars(false);
-		setStar(registersRx, false);
-		writeDisplayRegister(registersRx);
+		setStar(registersRxLed, false);
+		writeDisplayRegister(registersRxLed);
 		writeRelayRegister(registersRx);
 	}
 }
@@ -472,7 +476,7 @@ void triggerPttWorkflow()
 	if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
 	{
 		removeStars(true);
-		setStar(registersTx, true);
+		setStar(registersTxLed, true);
 	}
 	isRxModeSet_old = false;
 }
@@ -498,7 +502,7 @@ void pttTriggerTX()
 	if (isTxMode != isTxMode_old)
 	{
 		if (!inTxEditMode)
-			writeDisplayRegister(registersTx);		//////////////////
+			writeDisplayRegister(registersTxLed);		//////////////////
 		writeRelayRegister(registersTx);
 	}
 	isTxMode_old = isTxMode;
@@ -528,10 +532,10 @@ void setRxSetup()
   if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
   {
 	  removeStars(false);
-	  setStar(registersRx, false);
+	  setStar(registersRxLed, false);
   }
   if (!inTxEditMode)
-    writeDisplayRegister(registersRx);
+    writeDisplayRegister(registersRxLed);
   myDelay(leadOut);			// leadout time - wait to release the releays from tx position to rx position
   writeRelayRegister(registersRx);
 }
@@ -542,7 +546,6 @@ void setRxSetup()
 byte getPressedButton()
 {
   int c = getMyAverageValue();
-
   if (c < 10 && c >= 0)
     return 1;
   else if (c > 85 && c < 95)
@@ -559,16 +562,12 @@ byte getPressedButton()
 int getMyAverageValue()
 {
   int sum = 0;
-  int enemy = analogRead(buttonPin);
 
   for (int i = 0; i < 4; i ++)
   {
     int currentV = analogRead(buttonPin);
-    int dif = enemy - currentV;
-    if ((dif >= 0 && dif < 20) || (div < 0 && dif > -20))
-      sum += currentV;
-    enemy = currentV;
-    delay(3);
+    sum += currentV;
+    delay(5);
   }
   return sum / 4;
 }
