@@ -19,7 +19,7 @@
 //  lcd.print("  TX  1  2  3  A");
 //}
 //
-//// set value of the pressed button into the relay register
+//// set value of the pressed button into the relay register. Here you can define the mappings for the relays
 //void setRegisterArray(byte button, boolean regArr[])
 //{
 //  if (!inTxEditMode)                    // im rx mode
@@ -62,5 +62,25 @@
 //        regArr[3] = 1;
 //    }    
 //  }
+//}
+//
+//
+//// Here you can define possible exceptions buttons/leds vs. relays. Default is 1:1
+//void setRegisterLed(boolean isTx)
+//{
+//	if (isTx)
+//	{
+//		for (int i = 0; i<4; i++)
+//		{
+//			registersTxLed[i] = registersTx[i];
+//		}
+//	}
+//	else
+//	{
+//		for (int i = 0; i<4; i++)
+//		{
+//			registersRxLed[i] = registersRx[i];
+//		}
+//	}
 //}
 //

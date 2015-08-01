@@ -19,7 +19,7 @@ void displayMain()
   lcd.print("  TX  T  B  I  O");
 }
 
-// set value of the pressed button into the relay register     
+// set value of the pressed button into the relay register. Here you can define the mappings for the relays
 void setRegisterArray(byte button, boolean regArr[])
 {
    byte checkOne = verifyButtons(regArr, 4);
@@ -29,7 +29,7 @@ void setRegisterArray(byte button, boolean regArr[])
    Serial.println(button);
    if (regArr[button - 1] == 0)
    {
-	if (checkOne < 3)
+	if (checkOne < 3) // only but 1 or 2 is pressed
 	{
      if(button < 3) // so 1 or 2 is pressed
      {
@@ -60,7 +60,7 @@ void setRegisterArray(byte button, boolean regArr[])
        return;
      }
 	}
-	if (checkOne == 3) // checkOne cannot be 4!
+	if (checkOne == 3) // 3 buttons are already pressed checkOne cannot be 4!
 	{
 		if (button == 3) // 4 must be already be pressed
 		{
@@ -172,6 +172,7 @@ void setRegisterArray(byte button, boolean regArr[])
    }
 }
 
+// Here you can define possible exceptions buttons/leds vs. relays
 void setRegisterLed(boolean isTx)
 {
 	if (isTx)

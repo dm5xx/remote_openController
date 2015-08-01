@@ -165,7 +165,7 @@ void setup()
   setupRegisters();
   Ethernet.begin(mac, ip); // Client starten
   //Serial.print("server is at ");
-  //Serial.println(Ethernet.localIP());
+  ////Serial.println(Ethernet.localIP());
   attachInterrupt(0, setInterruptTxMode, FALLING);
 }
 
@@ -207,6 +207,8 @@ void setupLCD()
   delay(2000);
   displayVersion();
   delay(2000);
+  displayGreetings();
+  delay(3000);
   displayMain();
   setStar(registersRxLed, false);
 }
@@ -221,7 +223,7 @@ void loop()
   {
 	  if (!isTxModeSet)
 	  {
-		  Serial.println("ptt fire");
+		  //Serial.println("ptt fire");
 		  triggerPttWorkflow();
 	  }
   }
@@ -297,9 +299,17 @@ void loop()
 void displayVersion()
 {
   resetDisplay();
-  lcd.print("1.5.3 150712 IP");
+  lcd.print("1.5.4 150801 IP");
   lcd.setCursor(0, 1);
   lcd.print(" OK2ZAW & DM5XX");
+}
+
+void displayGreetings()
+{
+	resetDisplay();
+	lcd.print("Hello OM");
+	lcd.setCursor(0, 1);
+	lcd.print("Have fun!");
 }
 
 // reset the display and set the cursor to default
@@ -411,7 +421,7 @@ byte verifyButtons(boolean arri[], byte nrOfButtons)
 void setDisplayAndRelays(boolean isTx)
 {
 	setRegisterLed(isTx);
-	Serial.println("called");
+	//Serial.println("called");
 	if (isTx)
 	{
 		removeStars(true);
@@ -599,12 +609,12 @@ void webServer()
            if(cmdSet >= 0)
            {
              byte currentBank = getStringPartByNr(requestString, '/', 2).toInt(); // the 2nd part is the bank-number
-			 Serial.println(currentBank);
+			 //Serial.println(currentBank);
 			 String currentPinString = getStringPartByNr(requestString, '/', 3); // the 3nd part is the decimal-value to react on
-			 Serial.println(currentPinString);
+			 //Serial.println(currentPinString);
 
              String myString = currentPinString.substring(0, currentPinString.indexOf(" HTT")); // remove the _HTTP... and convert to int
-			 Serial.println(myString);
+			 //Serial.println(myString);
 
              if(!isTxMode)
              {

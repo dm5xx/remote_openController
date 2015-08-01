@@ -20,10 +20,10 @@
 //}
 //
 //
-//// set value of the pressed button into the relay register   
+//// set value of the pressed button into the relay register. Here you can define the mappings for the relays
 //void setRegisterArray(byte button, boolean regArr[])
 //{
-//   byte checkOne = verifyButtons(regArr, 4); 
+//   byte checkOne = verifyButtons(regArr, 4);
 //
 //   if(checkOne == 1 && button < 4)
 //   {
@@ -71,5 +71,25 @@
 //   }   
 //}
 //
+//
+//
+//// Here you can define possible exceptions buttons/leds vs. relays. Default is 1:1
+//void setRegisterLed(boolean isTx)
+//{
+//	if (isTx)
+//	{
+//		for (int i = 0; i<4; i++)
+//		{
+//			registersTxLed[i] = registersTx[i];
+//		}
+//	}
+//	else
+//	{
+//		for (int i = 0; i<4; i++)
+//		{
+//			registersRxLed[i] = registersRx[i];
+//		}
+//	}
+//}
 //
 
