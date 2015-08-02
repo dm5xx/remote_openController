@@ -41,29 +41,53 @@ void setRegisterArray(byte button, boolean regArr[])
   }
   else // im tx mode
   {
-    if (button != 4 && regArr[button - 1] == 1 && verifyButtons(regArr, 4) > 1)
-    {
-      if(regArr[3] == 1 && verifyButtons(regArr, 3) == 3)
-        regArr[3] = 0;
-
-      regArr[button - 1] = 0;
-    }
-    else
-    {
-      if(button == 4 && regArr[3] == 0 && verifyButtons(regArr, 3) < 3)
-      {
-        regArr[0] = 1;
-        regArr[1] = 1;
-        regArr[2] = 1;
-      }
-      regArr[button - 1] = 1;
-
-      if(verifyButtons(regArr, 3) == 3)
-        regArr[3] = 1;
-    }    
+    byte checkOne = verifyButtons(regArr, 4);
+	if (checkOne == 1) // only on is on
+	{
+		if (regArr[button - 1] == 0) // was the button off before? For sure, because its only one on...
+		{
+			if (button < 4) // if its 2, turn it on..
+				regArr[button-1] = 1;
+			else
+			{
+				regArr[0] = 1;
+				regArr[1] = 1;
+				regArr[2] = 1;
+			}
+			regArr[3] = 1; // if more than one is on, switch on 4, because of phasing...
+		}
+	}
+	if (checkOne == 3) // if 3 are on (hint: 2 can never be on, because phasing is missing..
+	{
+		if (regArr[button - 1] == 0) // turn last missing one on...
+			regArr[button - 1] = 1;
+		else // so now a button is switched off...
+		{
+			if (button==4) // if its 4, go back to default 1 on
+			{
+				regArr[0] = 1;
+				regArr[1] = 0;
+				regArr[2] = 0;
+			}
+			else // turn the button off
+				regArr[button-1] = 0;
+			regArr[3] = 0; // phasing has to be off
+		}
+	}
+	if (checkOne == 4) // if all are on...
+	{
+		if (button < 4) // if button < 4 is pressed, just turn it off
+			regArr[button-1] = 0;
+		else // if button 4 is pressed, go to default 1 on
+		{
+			regArr[0] = 1;
+			regArr[1] = 0;
+			regArr[2] = 0;
+			regArr[3] = 0;
+		}
+	}
   }
 }
-
 
 // Here you can define possible exceptions buttons/leds vs. relays. Default is 1:1
 void setRegisterLed(boolean isTx)

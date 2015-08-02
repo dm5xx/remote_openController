@@ -299,7 +299,7 @@ void loop()
 void displayVersion()
 {
   resetDisplay();
-  lcd.print("1.5.4 150801 IP");
+  lcd.print("1.5.5 150802 IP");
   lcd.setCursor(0, 1);
   lcd.print(" OK2ZAW & DM5XX");
 }
@@ -307,7 +307,7 @@ void displayVersion()
 void displayGreetings()
 {
 	resetDisplay();
-	lcd.print("Hello OM");
+	lcd.print("Hello my Master!");
 	lcd.setCursor(0, 1);
 	lcd.print("Have fun!");
 }
