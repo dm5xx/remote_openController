@@ -94,10 +94,15 @@ void setRegisterLed(boolean isTx)
 {
 	if (isTx)
 	{
+		byte checkOne = verifyButtons(registersTx, 4);
+		Serial.println(checkOne);
 		for (int i = 0; i<4; i++)
 		{
 			registersTxLed[i] = registersTx[i];
 		}
+
+		if (checkOne == 3)
+			registersTxLed[3] = 0;
 	}
 	else
 	{
