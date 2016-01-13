@@ -33,9 +33,11 @@
 
 #define  LED_OFF  0
 #define  LED_ON  1
+
+#define SKETCHMODE 0         // 0 = multibeaming / 1 = stack2 / 2 = stack3 => this will enable the needed files for each mode... nothing more to do than to change
+
 LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
 byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
-
 
 ////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
 
@@ -50,23 +52,45 @@ boolean registersRxLed[4] = { 1, 0, 0, 0 };
 boolean registersTxLed[4] = { 1, 0, 0, 0 };
 boolean registersDisplay[4] = { 1, 0, 0, 0 };
 
+
+///////////////////////////////////////// CHange the labels you want to have... there are about 11 chars left. so dont use longer labels than 11 chars...
+
+#if SKETCHMODE == 0
+	String rxDisplayArray[4] = { "Beam USA", "Beam AF", "Beam JA",  "Beam All" };
+	String txDisplayArray[7] = { "USA", "AF", "JA",  "USA+AF+JA", "USA+AF",  "USA+JA", "AF+JA" };
+#endif
+
+#if SKETCHMODE == 1
+	String rxDisplayArray[4] = { "Beam TOP", "BEAM BOTTOM", "InPhase",  "OutOfPhase" };
+	String txDisplayArray[4] = { "beam top", "beam bottom", "inphase",  "outofphase" };
+#endif
+
+#if SKETCHMODE == 2
+	String rxDisplayArray[6] = { "Beam TOP", "Beam Middle", "Beam Bottom",  "STACK ALL", "TOP+Mid", "Mid+Bot" };
+	String txDisplayArray[6] = { "Beam tOP", "Beam middle", "Beam bottom",  "STACK all", "TOP+mid", "Mid+bot"};
+#endif
+
 /////////////////////////////////////// WWW Content for PROGMEM ////////////////////////////////////////////////////////////////////////////////////////////
 
 const char  message0[] PROGMEM = { "<html><head>" };
 const char  message1[] PROGMEM = { "<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.11.3.js\">" };      //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-//const char  message1[] PROGMEM = { "<script type=\"text/javascript\" src=\"http://192.168.1.190/oc/jquery-1.11.3.js\">" };      //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 const char  message2[] PROGMEM = { "</script>" };
-//const char  message3[] PROGMEM  = {"<script type='text/javascript' src='http://192.168.1.190/oc/c.js'></script>"};            //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 const char  message3[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/c.js'></script>" };            //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-//const char  message3[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/c.js'></script>" };            //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cm.js'></script>" };         //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming*********** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-//const char  message4[] PROGMEM  = {"<script type='text/javascript' src='http://h.mmmedia-online.de/cs2.js'></script>"};        //********UNCOMMENT/COMMENT NEEDED VERSION: Stack 2 Ant************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-//const char  message4[] PROGMEM  = {"<script type='text/javascript' src='http://h.mmmedia-online.de/cs3.js'></script>"};          //********UNCOMMENT/COMMENT NEEDED VERSION: Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-//const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://192.168.1.190/oc/cs3.js'></script>" };          //********UNCOMMENT/COMMENT NEEDED VERSION: Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+
+#if SKETCHMODE == 0
+	const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cm.js'></script>" };         //******** Multibeam ************<------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+#endif
+
+#if SKETCHMODE == 1
+	const char  message4[] PROGMEM  = {"<script type='text/javascript' src='http://h.mmmedia-online.de/cs2.js'></script>"};        //******** Stack 2 Ant************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+#endif
+
+#if SKETCHMODE == 2
+	const char  message4[] PROGMEM  = {"<script type='text/javascript' src='http://h.mmmedia-online.de/cs3.js'></script>"};          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+#endif
+
 const char  message5[] PROGMEM = { "<link href=\"http://h.mmmedia-online.de/c.css\" rel=\"stylesheet\" type=\"text/css\"/>" };    //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-//const char  message5[] PROGMEM = { "<link href=\"http://192.168.1.190/oc/c.css\" rel=\"stylesheet\" type=\"text/css\"/>" };    //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 const char  message6[] PROGMEM = { "<link rel = \"shortcut icon\" href=\"http://h.mmmedia-online.de/favicon.ico\">" };
-//const char  message6[] PROGMEM = { "<link rel = \"shortcut icon\" href=\"http://192.168.1.190/oc/favicon.ico\">" };
 const char  message7[] PROGMEM = { "</head>" };
 const char  message8[] PROGMEM = { "<body>" };
 const char  message9[] PROGMEM = { "<div id=\"container\">" };
@@ -83,9 +107,18 @@ const char  message19[] PROGMEM = { "</div>" };
 const char  message20[] PROGMEM = { "<div class=\"myTab2\" id=\"myTabi\"><div id=\"myRxString\"></div><div id=\"myTxString\"></div></div>" };
 const char  message21[] PROGMEM = { "</div>" };
 const char  message22[] PROGMEM = { "</body>" };
-//const char  message23[] PROGMEM  = {"<script>var urlToArduino='http://192.168.1.180';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); "}; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.180';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
-//const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.180';$('#container').css(\"background-image\", \"url(http://192.168.1.190/oc/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+
+//// DONT FORGET TO CHANGE THE INTERNAL ARDUINO IP....
+#if SKETCHMODE == 0
+	const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+#endif
+#if SKETCHMODE == 1
+	const char  message23[] PROGMEM  = {"<script>var urlToArduino='http://192.168.1.179';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); "}; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+#endif
+#if SKETCHMODE == 2
+	const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+#endif
+
 const char  message24[] PROGMEM = { "getAllContent();window.setTimeout(updateLCD,150);</script>" };
 const char  message25[] PROGMEM = { "</html>" };
 
@@ -194,7 +227,7 @@ void setupRegisters()
 {
 	writeDisplayRegister(registersRxLed);
 	writeRelayRegister(registersRx);
-	setStar(registersTxLed, true);
+	setLabels(registersTxLed, true);
 	writeDisplayRegister(registersTxLed);
 	writeRelayRegister(registersTx);
 }
@@ -211,7 +244,7 @@ void setupLCD()
 	displayGreetings();
 	delay(3000);
 	displayMain();
-	setStar(registersRxLed, false);
+	setLabels(registersRxLed, false);
 }
 
 //////////////////////////////////////////////// Main Loop //////////////////////////////////////////////////////////////
@@ -300,7 +333,7 @@ void loop()
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.5.6 150915 IP");
+	lcd.print("1.6 011016 IP");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
@@ -340,14 +373,14 @@ void switchArrow(boolean mode)
 }
 
 // remove the stars - this is a brute force method.. you do not have to think about which one changed tho' :P
-void removeStars(boolean mode)
+void clearLabels(boolean mode)
 {
 	byte row = 0;
 
 	if (mode)
 		row = 1;
 
-	for (int i = 5; i < 15; i = i + 3)
+	for (int i = 5; i < 16; i++)
 	{
 		lcd.setCursor(i, row);
 		lcd.print(" ");
@@ -355,21 +388,14 @@ void removeStars(boolean mode)
 }
 
 // calculate the position and set the stars needed to represent the regsiterTx/Rx Array
-void setStar(boolean regArry[], boolean mode)
+void setLabels(boolean regArry[], boolean mode)
 {
 	byte row = 0;
 
 	if (mode) // if 1 => TXMode, second row of the display
 		row = 1;
 
-	for (int x = 0; x < 4; x++)
-	{
-		lcd.setCursor(5 + (x * 3), row);
-		if (regArry[x] == 1)
-			lcd.print("*");
-		else
-			lcd.print(" ");
-	}
+	setDisplay(regArry, row);
 }
 
 /*-------------------------------------------------- Register handling --------------------------------------------------------------*/
@@ -439,15 +465,15 @@ void setDisplayAndRelays(boolean isTx)
 	//Serial.println("called");
 	if (isTx)
 	{
-		removeStars(true);
-		setStar(registersTxLed, true);
+		clearLabels(true);
+		setLabels(registersTxLed, true);
 		writeDisplayRegister(registersTxLed);
 		writeRelayRegister(registersTx);
 	}
 	else
 	{
-		removeStars(false);
-		setStar(registersRxLed, false);
+		clearLabels(false);
+		setLabels(registersRxLed, false);
 		writeDisplayRegister(registersRxLed);
 		writeRelayRegister(registersRx);
 	}
@@ -500,8 +526,8 @@ void triggerPttWorkflow()
 	isTxModeSet = true;
 	if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
 	{
-		removeStars(true);
-		setStar(registersTxLed, true);
+		clearLabels(true);
+		setLabels(registersTxLed, true);
 	}
 	isRxModeSet_old = false;
 }
@@ -556,8 +582,8 @@ void setRxSetup()
 {
 	if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
 	{
-		removeStars(false);
-		setStar(registersRxLed, false);
+		clearLabels(false);
+		setLabels(registersRxLed, false);
 	}
 	if (!inTxEditMode)
 		writeDisplayRegister(registersRxLed);

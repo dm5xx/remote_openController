@@ -1,3 +1,5 @@
+
+#if SKETCHMODE == 2
 // the welcome info. you are not allowed to change anything here! CC
 void displayWelcomeText()
 {
@@ -14,9 +16,9 @@ void displayWelcomeText()
 void displayMain()
 {
   resetDisplay();
-  lcd.print("->RX  T  M  B  S");
+  lcd.print("->RX");
   lcd.setCursor(0, 1);
-  lcd.print("  TX  T  M  B  S");
+  lcd.print("  TX");
 }
 
 
@@ -92,4 +94,78 @@ void setRegisterLed(boolean isTx)
 	}
 }
 
+void setDisplay(boolean regArry[], byte row)
+{
+		clearLabels(row);
+		lcd.setCursor(5, row);
+		int sum = 0;
+		sum = verifyButtons(regArry, 4);
 
+		if (row == 0)
+		{
+			if (sum == 1)
+			{
+				for (byte i = 2; i >= 0; i--)
+				{
+					if (regArry[i] == 1)
+					{
+						lcd.print(rxDisplayArray[i]);
+						return;
+					}
+				}
+			}
+
+			if (sum == 4)
+			{
+				lcd.print(rxDisplayArray[3]);
+				return;
+			}
+			else
+			{
+				if (regArry[0] == 1 && regArry[1] == 1)
+				{
+					lcd.print(rxDisplayArray[4]);
+					return;
+				}
+				else
+				{
+					lcd.print(rxDisplayArray[5]);
+					return;
+				}
+			}
+		}
+		else
+		{
+			if (sum == 1)
+			{
+				for (byte i = 2; i >= 0; i--)
+				{
+					if (regArry[i] == 1)
+					{
+						lcd.print(txDisplayArray[i]);
+						return;
+					}
+				}
+			}
+
+			if (sum == 4)
+			{
+				lcd.print(txDisplayArray[3]);
+				return;
+			}
+			else
+			{
+				if (regArry[0] == 1 && regArry[1] == 1)
+				{
+					lcd.print(txDisplayArray[4]);
+					return;
+				}
+				else
+				{
+					lcd.print(txDisplayArray[5]);
+					return;
+				}
+			}
+		}
+}
+#endif
