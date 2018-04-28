@@ -1,0 +1,70 @@
+.myButton {
+	background-color:#454545;
+	-moz-border-radius:18px;
+	-webkit-border-radius:18px;
+	border-radius:18px;
+	border: 2px solid black;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	padding:16px 16px;
+}
+.myButton:hover { 
+	background-color:#5DA8FC;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
+
+#container
+{
+	background-image: url("stack.png");
+    background-repeat: no-repeat;
+    width: 718px;
+    height:193px;
+	border: 1px solid red;
+}
+
+.right {
+    position: relative;
+    right: 0px;
+}
+
+.bon {
+	background-color: #1B8500;
+	color: white;
+}
+
+.boff {
+	background-color: #454545;
+	color: #FFD000;
+}
+
+.myTab {
+	float: left;
+}
+
+.myTab2 {
+	float: left;
+	width:200px;
+	margin-top: 80px;
+	margin-left: 50px;
+}
+
+#myTabi {
+	font-family: Courier;
+	font-weight: bold;
+	color: #2fd6ec;	
+}
+
+.mytable
+{
+	margin-top: 76px;
+	margin-left: 50px;
+	width: 346px;
+}
+body
+{
+	background-color: black;
+}

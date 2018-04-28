@@ -2,7 +2,7 @@
 /*
 *  This is the openControl for the remoteQth.com
 *  If you need help, feel free to contact DM5XX@gmx.de
-*  Sketch is developed with IDE Version 1.6.4 and later
+*  Sketch is developed with IDE Version 1.6.12 and later
 *
 *  This is free software. You can redistribute it and/or modify it under
 *  the terms of Creative Commons Attribution 3.0 United States License if at least the version information says credits to remoteQTH.com :P
@@ -10,17 +10,39 @@
 *  To view a copy of this license, visit http://creativecommons.org/licenses/by/3.0/us/
 *  or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
 *
-*	Tribute to OL7M!
+*    Tribute to OL7M!
 *  LLAP!
-*/
-
-
+*
+**********************
+* Sj2w matrix:
+*        a    b    c    k4
+*A        1    0    0    1
+*B        0    1    0    1
+*C        0    0    1    1
+*A+B    0    0    1    0
+*B+C    1    0    0    0
+*A+C    0    1    0    0
+*A+B+C    0    0    0    0
+***********************
+***********************
+remoteQth matrix:
+*        a    b    c    bal
+*A        1    0    0    0
+*B        0    1    0    0
+*C        0    0    1    0
+*A+B    1    1    0    1
+*B+C    0    1    1    1
+(*A+C    1    0    1    1)
+*A+B+C    1    1    1    1
+***********************
+***************************************************************************************************************/
 #include <SPI.h>
+#include <digitalWriteFast.h>
 #include <Ethernet.h>
 #include <avr/pgmspace.h>
 #include <Wire.h>
-#include <LiquidCrystal_I2C.h>  // F Malpartida's NewLiquidCrystal library
-
+#include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 #define I2C_ADDR    0x20  // Define I2C Address for controller
 #define BACKLIGHT_PIN  7
 #define En_pin  4
@@ -30,65 +52,68 @@
 #define D5_pin  1
 #define D6_pin  2
 #define D7_pin  3
-
 #define  LED_OFF  0
 #define  LED_ON  1
-
-#define SKETCHMODE 0         // 0 = multibeaming / 1 = stack2 / 2 = stack3 => this will enable the needed files for each mode... nothing more to do than to change
-
+//#define DEBUG
+const byte epromAddresses[] = { 0,1,2,3,4,5,6,7 };
+#define SKETCHMODE 2         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3 => this will enable the needed files for each mode... so choose your mode...
 LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
 byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
-
-////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
-
-byte ip[] = { 192, 168, 1, 180 };           //*************************************************** <------------------------CHANGE ARDOINOs IP TO YOUR NEEDs - DONT FORGET TO CHANGE IT EVERYWHERE (see comments WWW Content for PROGMEM) !!!!!!           
-byte gateway[] = { 192, 168, 1, 190 };
+													  ////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
+byte ip[] = { 192, 168, 1, 179 };           //******** <------------------------CHANGE ARDOINOs IP TO YOUR NEEDs - DONT FORGET TO CHANGE IT EVERYWHERE (see comments WWW Content for PROGMEM) !!!!!!           
+byte gateway[] = { 192, 168, 1, 40 };    //***** Define your routers gateway adress to the internet if needed
 byte subnet[] = { 255, 255, 255, 0 };
+/////////////////////////////// Change only if you know what you re doing....
 EthernetServer server(80);                  //*************************************************** <------------------------CHANGE PORT, IF YOU DONT LIKE PORT 80           
 
-boolean registersRx[4] = { 1, 0, 0, 0 };
-boolean registersTx[4] = { 1, 0, 0, 0 };
-boolean registersRxLed[4] = { 1, 0, 0, 0 };
-boolean registersTxLed[4] = { 1, 0, 0, 0 };
-boolean registersDisplay[4] = { 1, 0, 0, 0 };
+											////////////////////////////// NO CHANGES HERE!!!!!
+boolean registersRx[4] = { 0, 0, 0, 0 };
+boolean registersTx[4] = { 0, 0, 0, 0 };
+boolean registersRxLed[4] = { 0, 0, 0, 0 };
+boolean registersTxLed[4] = { 0, 0, 0, 0 };
+boolean registersDisplay[4] = { 0, 0, 0, 0 };
 
-
-///////////////////////////////////////// CHange the labels you want to have... there are about 11 chars left. so dont use longer labels than 11 chars...
-
+///////////////////////////////////////// Change the labels you want to have... there are about 11 chars left. so dont use longer labels than 11 chars...
 #if SKETCHMODE == 0
-	String rxDisplayArray[4] = { "Beam USA", "Beam AF", "Beam JA",  "Beam All" };
-	String txDisplayArray[7] = { "USA", "AF", "JA",  "USA+AF+JA", "USA+AF",  "USA+JA", "AF+JA" };
+String rxDisplayArray[7] = { "Ant1", "Ant2", "Ant3",  "STACK ALL", "Ant1 + Ant2", "Ant1 + Ant3", "Ant2 + Ant3" };
+String txDisplayArray[7] = { "Ant1", "Ant2", "Ant3",  "STACK all", "Ant1 + Ant2", "Ant1 + Ant3", "Ant2 + Ant3" };
 #endif
-
 #if SKETCHMODE == 1
-	String rxDisplayArray[4] = { "Beam TOP", "BEAM BOTTOM", "InPhase",  "OutOfPhase" };
-	String txDisplayArray[4] = { "beam top", "beam bottom", "inphase",  "outofphase" };
+String rxDisplayArray[4] = { "Beam TOP", "BEAM BOTTOM", "InPhase",  "OutOfPhase" };
+String txDisplayArray[4] = { "beam top", "beam bottom", "inphase",  "outofphase" };
 #endif
-
 #if SKETCHMODE == 2
-	String rxDisplayArray[6] = { "Beam TOP", "Beam Middle", "Beam Bottom",  "STACK ALL", "TOP+Mid", "Mid+Bot" };
-	String txDisplayArray[6] = { "Beam tOP", "Beam middle", "Beam bottom",  "STACK all", "TOP+mid", "Mid+bot"};
+String rxDisplayArray[7] = { "Ant1", "Ant2", "Ant3",  "STACK ALL", "Ant1 + Ant2", "Ant1 + Ant3", "Ant2 + Ant3" };
+String txDisplayArray[7] = { "Ant1", "Ant2", "Ant3",  "STACK all", "Ant1 + Ant2", "Ant1 + Ant3", "Ant2 + Ant3" };
 #endif
-
-/////////////////////////////////////// WWW Content for PROGMEM ////////////////////////////////////////////////////////////////////////////////////////////
-
+#if SKETCHMODE == 3
+String rxDisplayArray[4] = { "SBeam USA", "SBeam AF", "SBeam JA",  "SBeam All" };
+String txDisplayArray[7] = { "SUSA", "SAF", "SJA",  "SUSA+AF+JA", "SUSA+AF", "SAF+JA", "SUSA+JA" };
+#endif
+#if SKETCHMODE == 4
+String rxDisplayArray[7] = { "SJ3W TOP", "SJ3W Middle", "SJ3W Bottom",  "STACK ALL", "STOP+SMid", "SMID+SBOT", "STOP+SBOT" };
+String txDisplayArray[7] = { "SJ3W tOP", "SJ3W middle", "SJ3W bottom",  "STACK all", "STOP+Smid", "Smid+Sbot", "Stop+Sbot" };
+#endif
+/////////////////////////////////////// WWW Content for PROGMEM  CHANGE ONLY (URLs) IF YOU KNOW WHAT YOU ARE DOING!!! ////////////////////////////////////////////////////////////////////////////////////////////
 const char  message0[] PROGMEM = { "<html><head>" };
 const char  message1[] PROGMEM = { "<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.11.3.js\">" };      //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 const char  message2[] PROGMEM = { "</script>" };
 const char  message3[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/c.js'></script>" };            //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
-
 #if SKETCHMODE == 0
-	const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cm.js'></script>" };         //******** Multibeam ************<------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cm.js'></script>" };         //******** Multibeam ************<------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 #endif
-
 #if SKETCHMODE == 1
-	const char  message4[] PROGMEM  = {"<script type='text/javascript' src='http://h.mmmedia-online.de/cs2.js'></script>"};        //******** Stack 2 Ant************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cs2.js'></script>" };        //******** Stack 2 Ant************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 #endif
-
 #if SKETCHMODE == 2
-	const char  message4[] PROGMEM  = {"<script type='text/javascript' src='http://h.mmmedia-online.de/cs3.js'></script>"};          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cs3.js'></script>" };          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 #endif
-
+#if SKETCHMODE == 3
+const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/sj2w_cm.js'></script>" };          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+#endif
+#if SKETCHMODE == 4
+const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/sj2w_cs3.js'></script>" };          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+#endif
 const char  message5[] PROGMEM = { "<link href=\"http://h.mmmedia-online.de/c.css\" rel=\"stylesheet\" type=\"text/css\"/>" };    //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 const char  message6[] PROGMEM = { "<link rel = \"shortcut icon\" href=\"http://h.mmmedia-online.de/favicon.ico\">" };
 const char  message7[] PROGMEM = { "</head>" };
@@ -106,24 +131,26 @@ const char  message18[] PROGMEM = { "</table>" };
 const char  message19[] PROGMEM = { "</div>" };
 const char  message20[] PROGMEM = { "<div class=\"myTab2\" id=\"myTabi\"><div id=\"myRxString\"></div><div id=\"myTxString\"></div></div>" };
 const char  message21[] PROGMEM = { "</div>" };
-const char  message22[] PROGMEM = { "</body>" };
-
-//// DONT FORGET TO CHANGE THE INTERNAL ARDUINO IP....
+const char  message22[] PROGMEM = { " " };
+//// DONT FORGET TO CHANGE THE INTERNAL ARDUINO IP....//////////////////////////////////////////////////
 #if SKETCHMODE == 0
-	const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 1
-	const char  message23[] PROGMEM  = {"<script>var urlToArduino='http://192.168.1.179';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); "}; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 2
-	const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
-
-const char  message24[] PROGMEM = { "getAllContent();window.setTimeout(updateLCD,150);</script>" };
+#if SKETCHMODE == 3
+const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+#endif
+#if SKETCHMODE == 4
+const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+#endif
+const char  message24[] PROGMEM = { "init();</script>" };
 const char  message25[] PROGMEM = { "</html>" };
-
 const byte webArraySize = 26;
-
 const char * const messages[webArraySize] PROGMEM =
 {
 	message0,
@@ -153,191 +180,213 @@ const char * const messages[webArraySize] PROGMEM =
 	message24,
 	message25
 };
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 String requestString;
 const int ptt_InPin = 2;
 const int ptt_OutPin = 9;
 const int txModePin = 6;
 const int txModeLedPin = 8;
-int DS_pin = 5;
-int STCP_pin = 3;
-int SHCP_pin = 7;
-volatile boolean isTxMode = false;
-volatile boolean isTxMode_old = false;
+const int DS_pin = 5;
+const int STCP_pin = 3;
+const int SHCP_pin = 7;
+volatile boolean isTransmitting = false;
+volatile boolean wasTransmittingBefore = false;
 volatile boolean isTxModeSet = false;
 volatile boolean isRxModeSet = false;
 volatile boolean isRxModeSet_old = false;
-
-long debouncing_time = 10;
-volatile unsigned long last_millis;
+const byte debouncing_timeMicros = 10000; // X in Miliseconds * 1000 = microseconds 
+volatile unsigned long last_micros;
 unsigned long pushDog = 0;
+unsigned long eepromDog = 0;
+const int leadIn = 1000; // dont forget: leadin complete = debouncetime in ms + leadIn!!!!
+const int leadOut = 1000;
 
 int buttonPin = 0;
 byte oldButton = 0;
-boolean inTxEditMode = false;
-byte oldTxEditMode = 0;
-
-int leadIn = 10;
-int leadOut = 20;
-
+boolean isInEditModeTX = true;
+boolean oldMode = 1;
 byte currentButton;
-byte readTxEditMode;
-
-boolean isInterruptDetached = false;
-boolean isInRelayInvertMode = false;		// set this to true if you want to use hardware with inverted relay out. Normal (false) mode: relays are switched on (0=>1). Inverted mode: relays are switched out (1 => 0);
-
-//////////////////////////////////////////////// Main Setup //////////////////////////////////////////////////////////////
-
+boolean isCurrentEditModeTX;
+boolean isInRelayInvertMode = false;        // set this to true if you want to use hardware with inverted relay out. Normal (false) mode: relays are switched on (0=>1). Inverted mode: relays are switched out (1 => 0);
+											//////////////////////////////////////////////// Main Setup //////////////////////////////////////////////////////////////
 void setup()
 {
 	Serial.begin(9600);
 	setupPinMode();
 	setupDigitalWrites();
+	readFromEprom();
 	setupLCD();
 	setupRegisters();
 	Ethernet.begin(mac, ip); // Client starten
-	//Serial.print("server is at ");
-	////Serial.println(Ethernet.localIP());
-	attachInterrupt(0, setInterruptTxMode, FALLING);
+	Serial.print("server is at ");
+	Serial.println(Ethernet.localIP());
+	attachInterrupt(0, setInterruptTxMode, CHANGE);
+}
+void readFromEprom()
+{
+	for (byte a = 0; a < 4; a++)
+	{
+		byte ashift = a + 4;
+		byte value = EEPROM.read(epromAddresses[a]);
+		byte valueShift = EEPROM.read(epromAddresses[ashift]); // tx values are stored 4 bytes after rx
+		registersRx[a] = value;
+		registersTx[a] = valueShift;
+		registersRxLed[a] = value;
+		registersTxLed[a] = valueShift;
+		registersDisplay[a] = value;
+	}
+}
+void writeToEprom()
+{
+	for (byte a = 0; a < 4; a++)
+	{
+		byte ashift = a + 4;
+		EEPROM.write(epromAddresses[a], registersRx[a]);
+		EEPROM.write(epromAddresses[ashift], registersTx[a]);
+	}
 }
 
 void setupDigitalWrites()
 {
-	digitalWrite(ptt_InPin, HIGH);
-	digitalWrite(ptt_OutPin, LOW);
-	digitalWrite(txModePin, HIGH);
-	digitalWrite(txModeLedPin, HIGH);
+	digitalWriteFast(ptt_InPin, HIGH);
+	digitalWriteFast(ptt_OutPin, LOW);
+	digitalWriteFast(txModePin, HIGH);
+	digitalWriteFast(txModeLedPin, HIGH);
 }
-
 void setupPinMode()
 {
-	pinMode(buttonPin, INPUT_PULLUP);
-	pinMode(DS_pin, OUTPUT);
-	pinMode(STCP_pin, OUTPUT);
-	pinMode(SHCP_pin, OUTPUT);
-	pinMode(ptt_InPin, INPUT);
-	pinMode(ptt_OutPin, OUTPUT);
-	pinMode(txModePin, INPUT);
-	pinMode(txModeLedPin, OUTPUT);
+	pinModeFast(buttonPin, INPUT_PULLUP);
+	pinModeFast(DS_pin, OUTPUT);
+	pinModeFast(STCP_pin, OUTPUT);
+	pinModeFast(SHCP_pin, OUTPUT);
+	pinModeFast(ptt_InPin, INPUT);
+	pinModeFast(ptt_OutPin, OUTPUT);
+	pinModeFast(txModePin, INPUT);
+	pinModeFast(txModeLedPin, OUTPUT);
 }
-
 void setupRegisters()
 {
+	specialSetup();
 	writeDisplayRegister(registersRxLed);
 	writeRelayRegister(registersRx);
 	setLabels(registersTxLed, true);
 	writeDisplayRegister(registersTxLed);
 	writeRelayRegister(registersTx);
 }
-
 void setupLCD()
 {
 	lcd.begin(16, 2); // initialize the lcd
 	lcd.setBacklightPin(BACKLIGHT_PIN, NEGATIVE);
 	lcd.setBacklight(LED_ON);
 	displayWelcomeText();
-	delay(2000);
+	betterDelay(2000);
 	displayVersion();
-	delay(2000);
+	betterDelay(2000);
 	displayGreetings();
-	delay(3000);
+	betterDelay(3000);
 	displayMain();
 	setLabels(registersRxLed, false);
 }
-
 //////////////////////////////////////////////// Main Loop //////////////////////////////////////////////////////////////
 void loop()
 {
-	///////////////////// PTT CONTROL SECTION /////////////////////////
-	debouncePtt(); // txptt is handled by interrupt, but from time to time it fails. this is handled inside debouncePtt();
-
-	if (isTxMode)
+	if (wasTransmittingBefore == false && isTransmitting)
 	{
-		if (!isTxModeSet)
-		{
-			//Serial.println("ptt fire");
-			triggerPttWorkflow();
-		}
+		pttTriggerTX();
+		triggerTXWorkflow();
+		wasTransmittingBefore = true;
 	}
-	else
+
+	if (wasTransmittingBefore && !isTransmitting)
 	{
 		if (!isRxModeSet)
 		{
 			receiving(); // set outupt pins
-			setRxSetup(); // handle rx delay
+			triggerRXWorkflow(); // handle rx delay
 			isRxModeSet = true;
 			isTxModeSet = false;
 		}
+
 		currentButton = getPressedButton();
-		readTxEditMode = digitalRead(txModePin);
+		isCurrentEditModeTX = digitalReadFast(txModePin);
+
+		wasTransmittingBefore = false;
 	}
 
-	///////////////////// BUTTON SECTION /////////////////////////    
-	// here comes the TX-Mode-Button logic
-	if (!isTxMode && readTxEditMode == 0 && readTxEditMode != oldTxEditMode)
+	if (!isTransmitting)
 	{
-		if (inTxEditMode)
-		{
-			inTxEditMode = false;
-			switchArrow(false);
-			digitalWrite(txModeLedPin, HIGH);
-			writeDisplayRegister(registersRxLed);
-			writeRelayRegister(registersRx);
-		}
-		else                                               // else go to the tx-edit
-		{
-			inTxEditMode = true;
-			switchArrow(true);
-			digitalWrite(txModeLedPin, LOW);
-			writeDisplayRegister(registersTxLed);
-			writeRelayRegister(registersTx);
-		}
-	}
+		currentButton = getPressedButton();
+		isCurrentEditModeTX = !digitalReadFast(txModePin);
 
-	// here comes the button logic
-	if (!isTxMode && currentButton > 0 && currentButton != oldButton && oldButton == 0 && (long)(millis() - pushDog) >= 200)
-	{
-		if (inTxEditMode)
+		///////////////////// BUTTON SECTION /////////////////////////    
+		// here comes the TX-Mode-Button logic
+		if (!isCurrentEditModeTX && isCurrentEditModeTX != oldMode)
 		{
-			setRegisterArray(currentButton, registersTx);
-			setDisplayAndRelays(true);
+			if (isInEditModeTX)
+			{
+				isInEditModeTX = false;
+				switchArrow(false);
+				digitalWriteFast(txModeLedPin, HIGH);
+				writeDisplayRegister(registersRxLed);
+				writeRelayRegister(registersRx);
+			}
+			else                                               // else go to the tx-edit
+			{
+				isInEditModeTX = true;
+				switchArrow(true);
+				digitalWriteFast(txModeLedPin, LOW);
+				writeDisplayRegister(registersTxLed);
+				writeRelayRegister(registersTx);
+			}
+#ifdef DEBUG
+			Serial.println("write to eeprom!");
+#endif // DEBUG
+			writeToEprom();
 		}
-		else
-		{
-			setRegisterArray(currentButton, registersRx);
-			setDisplayAndRelays(false);
-		}
-		pushDog = millis();
-	}
 
-	if (!isTxMode)
-	{
+		long currentDog = millis() - pushDog;
+
+		// here comes the button logic
+		if (currentButton > 0 && currentButton != oldButton && oldButton == 0 && (currentDog < 0 || currentDog >= 200))
+		{
+			if (isInEditModeTX)
+			{
+				setRegisterArray(currentButton, registersTx);
+				setDisplayAndRelays(true);
+			}
+			else
+			{
+				setRegisterArray(currentButton, registersRx);
+				setDisplayAndRelays(false);
+			}
+			pushDog = millis();
+		}
+
+		long eepromMillies = millis() - eepromDog;
+
+		if (eepromMillies < 0 || eepromMillies >= 600000)
+		{
+			writeToEprom();
+			eepromDog = millis();
+		}
 		oldButton = currentButton;
-		oldTxEditMode = readTxEditMode;
+		oldMode = isCurrentEditModeTX;
 		webServer();
-		if (isInterruptDetached)
-			interrupts();
 	}
 }
-
 /*------------------------------------------------------------------------------------------------------------------------*/
 /*---------------------------------------------HELPER METHODS ------------------------------------------------------------*/
 /*------------------------------------------------------------------------------------------------------------------------*/
 
-
 /*-------------------------------------------------- LCD Display ---------------------------------------------------------*/
-
 // the version info. Dont change anything here! CC
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.6 011016 IP");
+	lcd.print("1.93 150917 IP");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
-
 void displayGreetings()
 {
 	resetDisplay();
@@ -345,7 +394,6 @@ void displayGreetings()
 	lcd.setCursor(0, 1);
 	lcd.print("Have fun!");
 }
-
 // reset the display and set the cursor to default
 void resetDisplay()
 {
@@ -354,11 +402,9 @@ void resetDisplay()
 	lcd.backlight();
 	lcd.setCursor(0, 0);
 }
-
 // swirtch the -> to the needed position
 void switchArrow(boolean mode)
 {
-
 	byte a = 0;
 	byte b = 1;
 	if (mode)
@@ -371,33 +417,26 @@ void switchArrow(boolean mode)
 	lcd.setCursor(0, b);
 	lcd.print("  ");
 }
-
 // remove the stars - this is a brute force method.. you do not have to think about which one changed tho' :P
 void clearLabels(boolean mode)
 {
 	byte row = 0;
-
 	if (mode)
 		row = 1;
-
 	for (int i = 5; i < 16; i++)
 	{
 		lcd.setCursor(i, row);
 		lcd.print(" ");
 	}
 }
-
 // calculate the position and set the stars needed to represent the regsiterTx/Rx Array
 void setLabels(boolean regArry[], boolean mode)
 {
 	byte row = 0;
-
 	if (mode) // if 1 => TXMode, second row of the display
 		row = 1;
-
 	setDisplay(regArry, row);
 }
-
 /*-------------------------------------------------- Register handling --------------------------------------------------------------*/
 // my little Register method. Chains the displayregister with the rx/tx register and writes them into the chip.
 void writeRelayRegister(boolean registers[])
@@ -405,15 +444,12 @@ void writeRelayRegister(boolean registers[])
 	boolean tempRegisters[8];
 	byte inverter = 0;
 	byte displayinverter = 0;
-
 	for (int x = 0; x < 4; x++)
 	{
 		tempRegisters[x] = registers[x];
 		tempRegisters[x + 4] = registersDisplay[x];
 	}
-
-	digitalWrite(STCP_pin, LOW);
-
+	digitalWriteFast(STCP_pin, LOW);
 	for (int i = 7; i >= 0; i--)
 	{
 		if (i < 4 && isInRelayInvertMode)
@@ -427,42 +463,35 @@ void writeRelayRegister(boolean registers[])
 		{
 			inverter = tempRegisters[i];
 		}
-		digitalWrite(SHCP_pin, LOW);
-		digitalWrite(DS_pin, inverter);
-		digitalWrite(SHCP_pin, HIGH);
+		digitalWriteFast(SHCP_pin, LOW);
+		digitalWriteFast(DS_pin, inverter);
+		digitalWriteFast(SHCP_pin, HIGH);
 	}
-	digitalWrite(STCP_pin, HIGH);
+	digitalWriteFast(STCP_pin, HIGH);
 }
-
 // write the values of a gioven register into the display register, only needed for showing the button status
 void writeDisplayRegister(boolean regA[])
 {
 	for (int a = 0; a < 4; a++)
 		registersDisplay[a] = regA[a];
 }
-
 // set the complete Register array to given value
 void toggleRegisterArray(boolean regA[], byte v1)
 {
 	for (int a = 0; a < 4; a++)
 		regA[a] = v1;
 }
-
 // In some Setups, at least 1 output should be connected
 byte verifyButtons(boolean arri[], byte nrOfButtons)
 {
 	int sum = 0;
-
 	for (int u = 0; u < nrOfButtons; u++)
 		sum += arri[u];
-
 	return sum;
 }
-
 void setDisplayAndRelays(boolean isTx)
 {
 	setRegisterLed(isTx);
-	//Serial.println("called");
 	if (isTx)
 	{
 		clearLabels(true);
@@ -478,7 +507,6 @@ void setDisplayAndRelays(boolean isTx)
 		writeRelayRegister(registersRx);
 	}
 }
-
 /*-------------------------------------------------- Fancy Helpers --------------------------------------------------------------*/
 // my little string splitting method
 String getStringPartByNr(String data, char separator, int index)
@@ -500,28 +528,24 @@ String getStringPartByNr(String data, char separator, int index)
 	return dataPart;
 }
 
-// never call delay micros direct in interruptfunction..
-void myDelay(int x)   {
-	for (int i = 0; i <= x; i++)
+/*------------------------------------------------- PTT --------------------------------------------------------------------------*/
+
+void setInterruptTxMode()
+{
+	long currentValue = micros() - last_micros;
+
+
+	if (currentValue < 0 || currentValue >= debouncing_timeMicros)
 	{
-		delayMicroseconds(1000);
+		isTransmitting = !digitalReadFast(ptt_InPin);
+		last_micros = micros();
 	}
 }
 
-/*------------------------------------------------- PTT --------------------------------------------------------------------------*/
-void setInterruptTxMode()
+void triggerTXWorkflow()
 {
-	noInterrupts();
-	isInterruptDetached = true;
-	pttTriggerTX();
-	triggerPttWorkflow();
-}
-
-void triggerPttWorkflow()
-{
-	myDelay(leadIn);
-	digitalWrite(ptt_OutPin, HIGH);
-
+	betterDelay(leadIn);
+	digitalWriteFast(ptt_OutPin, HIGH);
 	isRxModeSet = false;
 	isTxModeSet = true;
 	if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
@@ -531,66 +555,47 @@ void triggerPttWorkflow()
 	}
 	isRxModeSet_old = false;
 }
-
-void debouncePtt() {
-	if ((long)(millis() - last_millis) >= debouncing_time) { // debounce the standard digitalWrites...
-		isTxMode = !digitalRead(ptt_InPin);
-		if (isTxMode)
-		{
-			if (!isInterruptDetached) // if interrupt is not detached = interrupt function was not called.
-				pttTriggerTX();
-		}
-		else
-			if (isRxModeSet_old != true)
-				pttTriggerRX();
-		last_millis = millis();
-	}
-}
-
 void pttTriggerTX()
 {
-	isTxMode = true;
-	if (isTxMode != isTxMode_old)
+	isTransmitting = true;
+	if (isTransmitting != wasTransmittingBefore)
 	{
-		if (!inTxEditMode)
-			writeDisplayRegister(registersTxLed);		//////////////////
+		if (!isInEditModeTX)
+			writeDisplayRegister(registersTxLed);        //////////////////
 		writeRelayRegister(registersTx);
 	}
-	isTxMode_old = isTxMode;
+	wasTransmittingBefore = isTransmitting;
 }
-
 void pttTriggerRX()
 {
-	isTxMode = false;
-	isTxMode_old = false;
+	isTransmitting = false;
+	wasTransmittingBefore = false;
 	isRxModeSet = false;
 	isTxModeSet = false;
 	isRxModeSet_old = true; // prevent next debouncePtt call from executing pttTriggerRX, because it was called before..
 }
-
 // set pins for receiving
 void receiving()
 {
-	digitalWrite(ptt_InPin, HIGH); // set intput to high just to be sure.. :P
-	digitalWrite(ptt_OutPin, LOW);
+	digitalWriteFast(ptt_InPin, HIGH); // set intput to high just to be sure.. :P
+	digitalWriteFast(ptt_OutPin, LOW);
 }
-
 /*------------------------------------------------- RX Setup --------------------------------------------------------------------*/
-
 // set the needed relays and display messages for RX
-void setRxSetup()
+void triggerRXWorkflow()
 {
 	if (currentButton > 0 && currentButton != oldButton && oldButton == 0)
 	{
 		clearLabels(false);
 		setLabels(registersRxLed, false);
 	}
-	if (!inTxEditMode)
+	if (!isTransmitting)
 		writeDisplayRegister(registersRxLed);
-	myDelay(leadOut);			// leadout time - wait to release the releays from tx position to rx position
-	writeRelayRegister(registersRx);
+	if (!isTransmitting)
+		betterDelay(leadOut);            // leadout time - wait to release the releays from tx position to rx position
+	if (!isTransmitting)
+		writeRelayRegister(registersRx);
 }
-
 
 /*------------------------------------------------- Button handling ---------------------------------------------------------------*/
 // return the pressed button depending on the reistor array
@@ -608,21 +613,18 @@ byte getPressedButton()
 	else
 		return 0;
 }
-
 //calculate the average and except a difference of about 20 to the centervalue
 int getMyAverageValue()
 {
 	int sum = 0;
-
 	for (int i = 0; i < 4; i++)
 	{
 		int currentV = analogRead(buttonPin);
 		sum += currentV;
-		delay(5);
+		betterDelay(5);
 	}
 	return sum / 4;
 }
-
 
 /*------------------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------- WEB Server Part --------------------------------------------------------*/
@@ -637,42 +639,55 @@ void webServer()
 		while (client.connected()) {
 			if (client.available()) {
 				char c = client.read();
-
 				if (requestString.length() < 100) {
 					requestString += c;
 				}
-
 				//if HTTP request has ended
 				if (c == '\n') {
 					int cmdSet = requestString.indexOf("Set/"); // see if its a set request
 					int cmdGet = requestString.indexOf("Get/"); // see if its a set request
-
 					if (cmdSet >= 0)
 					{
 						byte currentBank = getStringPartByNr(requestString, '/', 2).toInt(); // the 2nd part is the bank-number
-						//Serial.println(currentBank);
+#ifdef DEBUG
+						Serial.println(currentBank);
+#endif // DEBUG
 						String currentPinString = getStringPartByNr(requestString, '/', 3); // the 3nd part is the decimal-value to react on
-						//Serial.println(currentPinString);
-
+#ifdef DEBUG
+						Serial.println(currentPinString);
+#endif // DEBUG
 						String myString = currentPinString.substring(0, currentPinString.indexOf(" HTT")); // remove the _HTTP... and convert to int
-						//Serial.println(myString);
-
-						if (!isTxMode)
+#ifdef DEBUG
+						Serial.println(myString);
+#endif // DEBUG
+						if (!isTransmitting)
 						{
 							if (currentBank == 1)
 							{
-								inTxEditMode = true;
+#ifdef DEBUG
+								Serial.println("set to txmode");
+#endif // DEBUG
+								isInEditModeTX = true;
 								switchArrow(true);
+								digitalWriteFast(txModeLedPin, LOW);
 								writeToTheRegister(registersTx, myString);
 								setDisplayAndRelays(true);
 							}
 							else
 							{
-								inTxEditMode = false;
+#ifdef DEBUG
+								Serial.println("set to rxmode");
+#endif // DEBUG
+								isInEditModeTX = false;
 								switchArrow(false);
+								digitalWriteFast(txModeLedPin, HIGH);
 								writeToTheRegister(registersRx, myString);
 								setDisplayAndRelays(false);
 							}
+#ifdef DEBUG
+							Serial.println("write to eprom");
+#endif // DEBUG
+							writeToEprom();
 						}
 						getStatus(client);
 					}
@@ -680,17 +695,14 @@ void webServer()
 						getStatus(client);
 					else
 						getPage(client);
-
 					requestString = "";
-
-					delay(1);
+					betterDelay(1);
 					client.stop();
 				}
 			}
 		}
 	}
 }
-
 // A simple cors safe webserver response
 void getStatus(EthernetClient client)
 {
@@ -708,7 +720,6 @@ void getStatus(EthernetClient client)
 	client.print(arrTx);
 	client.print("\"})");
 }
-
 void getPage(EthernetClient client)
 {
 	client.println("HTTP/1.1 200 OK"); //send new page
@@ -717,14 +728,12 @@ void getPage(EthernetClient client)
 	client.println("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 	client.println("Access-Control-Allow-Headers: Authorization");
 	client.println();
-
 	for (int i = 0; i < webArraySize; i++)
 	{
 		printProgStr((const char *)pgm_read_word(&messages[i]), client);
 		client.println();
 	}
 }
-
 void printProgStr(const char * str, EthernetClient client)
 {
 	char c;
@@ -733,7 +742,6 @@ void printProgStr(const char * str, EthernetClient client)
 	while ((c = pgm_read_byte(str++)))
 		client.print(c);
 }
-
 // Writes to both of the registers directly - Remember: If you are calling the webserverm you have to take care about urself about button-switching logic and restrictions
 void writeToTheRegister(boolean regiA[], String theString)
 {
@@ -742,12 +750,10 @@ void writeToTheRegister(boolean regiA[], String theString)
 		boolean val = true;
 		if (theString[d] == '0')
 			val = false;
-
 		regiA[d] = val;
 		registersDisplay[d] = val;
 	}
 }
-
 // convert an array into the string for the response method
 String convertArrayToString(boolean ri[])
 {
@@ -759,6 +765,15 @@ String convertArrayToString(boolean ri[])
 		else
 			mytemp += "0";
 	}
-
 	return mytemp;
+}
+void betterDelay(uint32_t ms)
+{
+	uint32_t start = micros();
+	uint32_t mi = ms * 1000;
+	while (micros() - start < mi) {
+		// do nothing
+		//        if (!wasTransmittingBefore && isTransmitting)
+		//            break;
+	}
 }

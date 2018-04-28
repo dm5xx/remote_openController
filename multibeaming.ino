@@ -1,5 +1,9 @@
 
 #if SKETCHMODE == 0
+
+void specialSetup()
+{}
+
 // the welcome info. you are not allowed to change anything here! CC
 void displayWelcomeText()
 {
@@ -24,72 +28,104 @@ void displayMain()
 // set value of the pressed button into the relay register. Here you can define the mappings for the relays
 void setRegisterArray(byte button, boolean regArr[])
 {
-  if (!inTxEditMode)                    // im rx mode
-  {
-    if (button < 4)                     // only button could be active, except button 4 
-    {
-      toggleRegisterArray(regArr, 0);
+	byte checkHowManyOn = verifyButtons(regArr, 4);
 
-      if (regArr[button - 1] == 1)
-        regArr[button - 1] = 0;
-      else
-        regArr[button - 1] = 1;
-    }
-    else                                // button 4: all combinations possible
-    {
-      if (regArr[button - 1] == 0)
-        toggleRegisterArray(regArr, 1);
-    }
-  }
-  else // im tx mode
-  {
-    byte checkOne = verifyButtons(regArr, 4);
-	if (checkOne == 1) // only on is on
+	boolean isSameKeyPressed = false;
+
+	if (regArr[button - 1] == 1)
+		isSameKeyPressed = true;
+
+	if (checkHowManyOn == 1 && button < 4)
 	{
-		if (regArr[button - 1] == 0) // was the button off before? For sure, because its only one on...
+		if (isSameKeyPressed == false)
 		{
-			if (button < 4) // if its 2, turn it on..
-				regArr[button-1] = 1;
-			else
+			regArr[0] = 0;
+			regArr[1] = 0;
+			regArr[2] = 0;
+			regArr[button - 1] = 1;
+			return;
+		}
+		else
+		{
+			if (button == 1)
 			{
 				regArr[0] = 1;
 				regArr[1] = 1;
-				regArr[2] = 1;
+				regArr[2] = 0;
+				return;
 			}
-			regArr[3] = 1; // if more than one is on, switch on 4, because of phasing...
-		}
-	}
-	if (checkOne == 3) // if 3 are on (hint: 2 can never be on, because phasing is missing..
-	{
-		if (regArr[button - 1] == 0) // turn last missing one on...
-			regArr[button - 1] = 1;
-		else // so now a button is switched off...
-		{
-			if (button==4) // if its 4, go back to default 1 on
+			if (button == 2)
+			{
+				regArr[0] = 0;
+				regArr[1] = 1;
+				regArr[2] = 1;
+				return;
+			}
+			if (button == 3)
 			{
 				regArr[0] = 1;
 				regArr[1] = 0;
-				regArr[2] = 0;
+				regArr[2] = 1;
+				return;
 			}
-			else // turn the button off
-				regArr[button-1] = 0;
-			regArr[3] = 0; // phasing has to be off
 		}
 	}
-	if (checkOne == 4) // if all are on...
+	if (checkHowManyOn == 2 && button < 4)
 	{
-		if (button < 4) // if button < 4 is pressed, just turn it off
-			regArr[button-1] = 0;
-		else // if button 4 is pressed, go to default 1 on
-		{
-			regArr[0] = 1;
-			regArr[1] = 0;
-			regArr[2] = 0;
-			regArr[3] = 0;
-		}
+		regArr[0] = 0;
+		regArr[1] = 0;
+		regArr[2] = 0;
+		regArr[button - 1] = 1;
+		return;
 	}
-  }
+
+	if (checkHowManyOn == 1 && button == 4)
+	{
+		toggleRegisterArray(regArr, 1);
+		return;
+	}
+
+	if (checkHowManyOn == 4 && button < 4 || checkHowManyOn == 3 && button < 4)
+	{
+		toggleRegisterArray(regArr, 0);
+		regArr[button - 1] = 1;
+		return;
+	}
+
+	if (checkHowManyOn == 4 && button == 4)
+	{
+		regArr[0] = 1;
+		regArr[1] = 1;
+		regArr[2] = 0;
+		return;
+	}
+
+	if (checkHowManyOn == 3 && button == 4 && regArr[0] == 1)
+	{
+		regArr[0] = 0;
+		regArr[1] = 1;
+		regArr[2] = 1;
+		return;
+	}
+
+	if (checkHowManyOn == 3 && button == 4 && regArr[2] == 1)
+	{
+		regArr[0] = 1;
+		regArr[1] = 1;
+		regArr[2] = 1;
+		return;
+	}
+
+	if (checkHowManyOn == 2 && button == 4)
+	{
+		regArr[0] = 1;
+		regArr[1] = 1;
+		regArr[2] = 1;
+		regArr[3] = 1;
+		return;
+	}
 }
+
 
 // Here you can define possible exceptions buttons/leds vs. relays. Default is 1:1
 void setRegisterLed(boolean isTx)
@@ -121,54 +157,39 @@ void setDisplay(boolean regArry[], byte row)
 	clearLabels(row);
 	lcd.setCursor(5, row);
 
-	if (row == 0)
+	int sum = 0;
+	sum = verifyButtons(regArry, 4);
+	//Serial.print("summe ");
+	//Serial.print(sum);
+
+	if (sum == 1 || sum > 3)
 	{
 		for (byte i = 3; i >= 0; i--)
 		{
 			if (regArry[i] == 1)
 			{
-				lcd.print(rxDisplayArray[i]);
+				lcd.print(txDisplayArray[i]);
 				return;
-			}		
+			}
 		}
 	}
 	else
 	{
-		int sum = 0;
-		sum = verifyButtons(regArry, 4);
-		Serial.print("su");
-		Serial.print(sum);
-
-		if (sum == 1 || sum > 2)
+		if (regArry[0] == 1 && regArry[1] == 1)
 		{
-			for (byte i = 3; i >= 0; i--)
-			{
-				if (regArry[i] == 1)
-				{
-					lcd.print(txDisplayArray[i]);
-					return;
-				}
-			}
+			lcd.print(txDisplayArray[4]);
+			return;
 		}
-		else
+		if (regArry[0] == 1 && regArry[2] == 1)
 		{
-			if (regArry[0] == 1 && regArry[1] == 1)
-			{
-				lcd.print(txDisplayArray[4]);
-				return;
-			}
-			if (regArry[0] == 1 && regArry[2] == 1)
-			{
-				lcd.print(txDisplayArray[5]);
-				return;
-			}
-			if (regArry[1] == 1 && regArry[2] == 1)
-			{
-				lcd.print(txDisplayArray[6]);
-				return;
-			}
+			lcd.print(txDisplayArray[5]);
+			return;
 		}
-
+		if (regArry[1] == 1 && regArry[2] == 1)
+		{
+			lcd.print(txDisplayArray[6]);
+			return;
+		}
 	}
 }
 #endif

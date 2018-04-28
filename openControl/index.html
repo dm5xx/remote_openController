@@ -1,0 +1,43 @@
+<html>
+   <head>
+      <script type='text/javascript' src='http://code.jquery.com/jquery-1.11.2.min.js'></script>
+      <script type='text/javascript' src='c.js'></script>
+      <script type='text/javascript' src='cm.js'></script>
+      <link href="c.css" rel="stylesheet" type="text/css"/>
+   </head>
+   <body>
+      <div id="container">
+         <div class="myTab">
+            <table class="myTable">
+               <tr>
+                  <td>
+                     <a id="b0" href="#" class="myButton" onClick="clkButton(0)"> </a>
+                  </td>
+                  <td>
+                     <a id="b1" href="#" class="myButton" onClick="clkButton(1)"> </a>
+                  </td>
+                  <td>
+                     <a id="b2" href="#" class="myButton" onClick="clkButton(2)"> </a>
+                  </td> 
+                  <td>
+                     <a id="b3" href="#" class="myButton" onClick="clkButton(3)"> </a>
+                  </td>
+                  <td align="center">
+                     <a id="b4" href="#" class="myButton right" onClick="clkButton(4)"> </a>
+                  </td>
+               </tr>
+            </table>
+         </div>
+         <div class="myTab2" id="myTabi">
+            <div id="myRxString"></div>
+            <div id="myTxString"></div>
+         </div>
+      </div>
+   </body>
+   <script>
+      var urlToArduino = 'http://192.168.1.180';
+      getAllContent();
+      $('#container').css("background-image", "url(http://h.mmmedia-online.de/multi.png)");
+      window.setTimeout(updateLCD,150);
+   </script>
+</html>

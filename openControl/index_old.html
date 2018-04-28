@@ -1,0 +1,389 @@
+<html>
+<head>
+<script type='text/javascript' src='http://code.jquery.com/jquery-1.11.2.min.js'></script>
+<script type='text/javascript' src='c.js'></script>
+<script type='text/javascript' src='cs2.js'></script>
+<link href="c.css" rel="stylesheet" type="text/css"/>
+<link href="cs2.css" rel="stylesheet" type="text/css"/>
+<!--<script>
+	var isTxEditMode = false;
+	var txArray = [];
+	var rxArray = []; 
+
+var myResponseHandler = function(data) {
+
+	var completeContent = [];
+	completeContent = data.split('|');
+	fillArrays(completeContent[0], completeContent[1]);
+	
+	if(!isTxEditMode)
+		setButtons(rxArray);
+	else
+		setButtons(txArray);
+}
+
+function fillArrays(stringRx, stringTx)
+{
+	for(var i=0; i<4; i++)
+	{
+		rxArray[i] = stringRx[i].charCodeAt()-48;
+		txArray[i] = stringTx[i].charCodeAt()-48;
+	}
+}
+
+
+function setButtons(arr)
+{
+	for(var i=0; i<4; i++)
+	{		
+		setButton(i, arr[i]);
+	}	
+}
+
+function setButton(btnNr, expo)
+{
+	var buttonname = 'b'+btnNr;
+
+	if(expo == 1)
+	{
+		var onbut = document.getElementById(buttonname);
+		onbut.className = "myButton right bon";
+	};
+			
+	if(expo == 0)
+	{
+		var offbut = document.getElementById(buttonname);
+		offbut.className = "myButton right boff";
+	};
+}
+
+function getAllContent() {
+		$.ajax({
+			crossDomain: true,
+			async : true,
+			type: "GET",
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Headers': '*'
+			},
+			url: "http://192.168.1.180?callback=?",
+			dataType: 'jsonp',
+			jsonpCallback:'xx'})
+			.done(function(data){ 
+				myResponseHandler(data.v);
+			});
+}
+
+function setContent(currentBank, toBankValue) {
+		jQuery.support.cors = true;
+		
+		return $.ajax({
+			crossDomain: true,
+			async : true,
+			type: "GET",
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Headers': '*'	
+			},
+			url: "http://192.168.1.180/Set/"+currentBank+"/"+toBankValue,
+			contentType: "text/html",
+			dataType: "html",
+			success: function(data) {}
+		});
+}
+
+function clkButton(butNr)
+{
+	if(butNr == 4)
+	{
+		getAllContent();
+
+		if(isTxEditMode== false)
+		{
+			setButton(butNr, 1);
+			isTxEditMode = true;
+		}
+		else
+		{
+			setButton(butNr, 0);
+			isTxEditMode = false;			
+		}
+
+	}
+	else
+	{
+		if(!isTxEditMode)
+		{
+			rxArray = setRegisterArray(butNr+1, rxArray);
+			setButtons(rxArray);
+			setContent(0, rxArray.join('')); 			
+		}
+		else
+		{
+			txArray = setRegisterArray(butNr+1, txArray);
+			setButtons(txArray);			
+			setContent(1, txArray.join('')); 			
+		}
+	}
+
+	window.setTimeout(updateLCD,100);
+}
+
+function setRegisterArray(button, regArr)
+{
+  var checkOne = verifyButtons(regArr, 4);
+  console.log(checkOne);
+  if (regArr[button - 1] == 0)
+  {
+    if(checkOne < 3 && button < 3)
+    {
+      if(button==1 && regArr[1] ==1)
+        regArr[1] = 0;
+      
+      if(button==2 && regArr[0] ==1)
+        regArr[0] = 0;
+        
+      regArr[button - 1] = 1;
+      return regArr;
+    }
+    
+    if(checkOne < 3 && button == 3)
+    {
+      regArr[0] = 1;
+      regArr[1] = 1;
+      regArr[2] = 1;
+      return regArr;
+    }
+
+    if(checkOne < 3 && button == 4)
+    {
+      regArr[0] = 1;
+      regArr[1] = 1;
+      regArr[3] = 1;
+      return regArr;
+    }
+  
+    if(button == 3)
+    {
+      regArr[2] = 1;
+      regArr[3] = 0;
+      return regArr;
+    }
+
+    if(button == 4)
+    {
+      regArr[0] = 1;
+      regArr[1] = 1;
+      regArr[2] = 0;
+      regArr[3] = 1;
+      return regArr;
+    }     
+  }
+  else
+  {
+    if(button == 3)
+    {
+      regArr[3] = 0;
+      regArr[2] = 0;
+      regArr[1] = 0;
+      regArr[0] = 1;
+      return regArr;
+    }
+
+    if(button == 4)
+    {
+      regArr[3] = 0;
+      regArr[2] = 1;
+      regArr[1] = 1;
+      regArr[0] = 1;
+      return regArr;
+    }
+      
+    if(checkOne == 3)
+    {
+      if(button == 2)
+      {
+        regArr[3] = 0;
+        regArr[2] = 0;
+        regArr[1] = 0;
+        return regArr;
+      }
+      if(button == 1)
+      {
+        regArr[3] = 0;
+        regArr[2] = 0;
+        regArr[0] = 0;
+        return regArr;
+      }
+    }
+    
+    if(checkOne == 4)
+    {
+      if(button > 2)
+      {
+        regArr[3] = 0;
+        regArr[2] = 0;
+        regArr[1] = 0;       
+        return regArr;
+      }  
+
+      if(button == 2)
+      {
+        regArr[3] = 0;
+        regArr[2] = 0;
+        regArr[1] = 0;       
+        return regArr;
+      }  
+
+      if(button == 1)
+      {
+        regArr[3] = 0;
+        regArr[2] = 0;
+        regArr[0] = 0;       
+        return regArr;
+      }  
+    }
+  }
+}
+
+function verifyButtons(arri, nrOfButtons)
+{
+  var sum = 0;
+  
+  for(var u = 0;u < nrOfButtons; u++)
+    sum += arri[u];   
+    
+  return sum;
+}
+
+function updateLCD()
+{
+	createLcdString(rxArray, false);
+	createLcdString(txArray, true);
+}
+
+function createLcdString(arrei, isTx)
+{
+	var tempString = "";
+
+	if(!isTx)
+	{
+		if(!isTxEditMode)
+			tempString += "-> ";
+		else
+			tempString += "&nbsp;&nbsp;&nbsp;";
+		tempString += "RX&nbsp;";		
+	}
+	else
+	{
+		if(isTxEditMode)
+			tempString += "-> ";	
+		else
+			tempString += "&nbsp;&nbsp;&nbsp;";
+		tempString += "TX&nbsp;";
+	}
+
+	if (arrei[0]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "T&nbsp;";
+
+	if (arrei[1]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "B&nbsp;";
+
+	if (arrei[2]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "I&nbsp;";
+
+	if (arrei[3]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "O&nbsp;";
+
+	if(!isTx)
+		$('#myRxString').html(tempString);
+	else
+		$('#myTxString').html(tempString);
+}
+
+function createTxString()
+{
+	var tempString = "";
+	if(isTxEditMode)
+		tempString += "-> ";
+	else
+		tempString += "&nbsp;&nbsp;&nbsp;";
+	tempString += "TX&nbsp;";
+
+	if (txArray[0]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "T&nbsp;";
+
+	if (txArray[1]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "B&nbsp;";
+
+	if (txArray[2]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "I&nbsp;";
+
+	if (txArray[3]==1)
+		tempString += "*";
+	else
+		tempString += "&nbsp;";
+	tempString += "O&nbsp;";
+
+	$('#myTxString').html(tempString);
+}
+
+getAllContent();
+</script-->
+</head>
+<body>
+
+<div id="container">
+<div class="myTab">
+<table class="myTable">
+	<tr>
+		<td>
+			<a id="b0" href="#" class="myButton" onClick="clkButton(0)"> </a>
+		</td>
+		<td>
+			<a id="b1" href="#" class="myButton" onClick="clkButton(1)"> </a>
+		</td>
+		<td>
+			<a id="b2" href="#" class="myButton" onClick="clkButton(2)"> </a>
+		</td>
+		<td>
+			<a id="b3" href="#" class="myButton" onClick="clkButton(3)"> </a>
+		</td>
+		<td align="center">
+			<a id="b4" href="#" class="myButton right" onClick="clkButton(4)"> </a>
+		</td>
+	</tr>
+</table>
+</div>
+<div class="myTab2" id="myTabi">
+	<div id="myRxString"></div>
+	<div id="myTxString"></div>	
+</div>
+</div>
+</body>
+<script>
+	getAllContent();
+	window.setTimeout(updateLCD,100);
+</script>
+</html>

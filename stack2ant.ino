@@ -1,5 +1,9 @@
 
 #if SKETCHMODE == 1
+
+void specialSetup()
+{}
+
 // the welcome info. you are not allowed to change anything here! CC
 void displayWelcomeText()
 {
