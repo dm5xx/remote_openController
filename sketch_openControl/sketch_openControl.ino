@@ -194,12 +194,12 @@ volatile boolean wasTransmittingBefore = false;
 volatile boolean isTxModeSet = false;
 volatile boolean isRxModeSet = false;
 volatile boolean isRxModeSet_old = false;
-const byte debouncing_timeMicros = 10000; // X in Miliseconds * 1000 = microseconds 
+const byte debouncing_timeMicros = 15; // X in Miliseconds * 1000 = microseconds 
 volatile unsigned long last_micros;
 unsigned long pushDog = 0;
 unsigned long eepromDog = 0;
-const int leadIn = 1000; // dont forget: leadin complete = debouncetime in ms + leadIn!!!!
-const int leadOut = 1000;
+const int leadIn = 50; // dont forget: leadin complete = debouncetime in ms + leadIn!!!!
+const int leadOut = 50;
 
 int buttonPin = 0;
 byte oldButton = 0;
