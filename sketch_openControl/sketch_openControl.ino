@@ -56,7 +56,7 @@ remoteQth matrix:
 #define  LED_ON  1
 //#define DEBUG
 const byte epromAddresses[] = { 0,1,2,3,4,5,6,7 };
-#define SKETCHMODE 2         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3 => this will enable the needed files for each mode... so choose your mode...
+#define SKETCHMODE 0         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3 => this will enable the needed files for each mode... so choose your mode...
 LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
 byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
 													  ////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
@@ -383,7 +383,7 @@ void loop()
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.93 150917 IP");
+	lcd.print("1.94 190119 IP");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
