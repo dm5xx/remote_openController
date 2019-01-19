@@ -444,11 +444,17 @@ void writeRelayRegister(boolean registers[])
 	boolean tempRegisters[8];
 	byte inverter = 0;
 	byte displayinverter = 0;
+	byte counter = 0;
 	for (int x = 0; x < 4; x++)
 	{
 		tempRegisters[x] = registers[x];
 		tempRegisters[x + 4] = registersDisplay[x];
+		counter += registers[x]; // sum all who are on
 	}
+
+	if(counter >1) // of more than 1 is on, switch on balun
+		tempRegisters[3] = 1; 
+
 	digitalWriteFast(STCP_pin, LOW);
 	for (int i = 7; i >= 0; i--)
 	{
