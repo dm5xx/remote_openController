@@ -1,15 +1,19 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Linux",
             "includePath": [
-                "D:\\Program Files (x86)\\Arduino\\tools\\**",
-                "D:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**"
+                "/home/werkstatt/Dokumente/arduino-1.8.6/tools/**",
+                "/home/werkstatt/Dokumente/arduino-1.8.6/hardware/arduino/avr/**",
+                "/home/werkstatt/Arduino/libraries/"
             ],
             "forcedInclude": [
-                "D:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
+                "/home/werkstatt/Dokumente/arduino-1.8.6/hardware/arduino/avr/cores/arduino/Arduino.h"
             ],
-            "intelliSenseMode": "msvc-x64"
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
         }
     ],
     "version": 4

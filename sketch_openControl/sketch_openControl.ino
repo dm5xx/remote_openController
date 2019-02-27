@@ -36,13 +36,19 @@ remoteQth matrix:
 *A+B+C    1    1    1    1
 ***********************
 ***************************************************************************************************************/
-#include <SPI.h>
-#include <digitalWriteFast.h>
+/*#include <SPI.h>
+#include "digitalWriteFast.h"
 #include <Ethernet.h>
 #include <avr/pgmspace.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>*/
+
+#include "/home/werkstatt/Arduino/libraries/digitalWriteFast.h"
+#include <LiquidCrystal_I2C.h>
+#include <Ethernet.h>
 #include <EEPROM.h>
+
 #define I2C_ADDR    0x20  // Define I2C Address for controller
 #define BACKLIGHT_PIN  7
 #define En_pin  4
@@ -56,7 +62,7 @@ remoteQth matrix:
 #define  LED_ON  1
 //#define DEBUG
 const byte epromAddresses[] = { 0,1,2,3,4,5,6,7 };
-#define SKETCHMODE 0         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3 => this will enable the needed files for each mode... so choose your mode...
+#define SKETCHMODE 1         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3 => this will enable the needed files for each mode... so choose your mode...
 LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
 byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
 													  ////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
@@ -383,7 +389,7 @@ void loop()
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.94 190119 IP");
+	lcd.print("1.95 190119 IP");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
@@ -452,8 +458,10 @@ void writeRelayRegister(boolean registers[])
 		counter += registers[x]; // sum all who are on
 	}
 
+#if SKETCHMODE != 1
 	if(counter >1) // of more than 1 is on, switch on balun
 		tempRegisters[3] = 1; 
+#endif
 
 	digitalWriteFast(STCP_pin, LOW);
 	for (int i = 7; i >= 0; i--)
