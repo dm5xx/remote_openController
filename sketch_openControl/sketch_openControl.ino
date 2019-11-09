@@ -44,9 +44,15 @@ remoteQth matrix:
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>*/
 
+//#define ENABLEWEBSERVER
+
 #include "/home/werkstatt/Arduino/libraries/digitalWriteFast.h"
 #include <LiquidCrystal_I2C.h>
-#include <Ethernet.h>
+
+#ifdef ENABLEWEBSERVER
+	#include <Ethernet.h>
+#endif
+
 #include <EEPROM.h>
 
 #define I2C_ADDR    0x20  // Define I2C Address for controller
@@ -61,17 +67,22 @@ remoteQth matrix:
 #define  LED_OFF  0
 #define  LED_ON  1
 //#define DEBUG
-const byte epromAddresses[] = { 0,1,2,3,4,5,6,7 };
-#define SKETCHMODE 1         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3 => this will enable the needed files for each mode... so choose your mode...
-LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
-byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
-													  ////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
-byte ip[] = { 192, 168, 1, 179 };           //******** <------------------------CHANGE ARDOINOs IP TO YOUR NEEDs - DONT FORGET TO CHANGE IT EVERYWHERE (see comments WWW Content for PROGMEM) !!!!!!           
-byte gateway[] = { 192, 168, 1, 40 };    //***** Define your routers gateway adress to the internet if needed
-byte subnet[] = { 255, 255, 255, 0 };
-/////////////////////////////// Change only if you know what you re doing....
-EthernetServer server(80);                  //*************************************************** <------------------------CHANGE PORT, IF YOU DONT LIKE PORT 80           
 
+const byte epromAddresses[] = { 0,1,2,3,4,5,6,7 };
+#define SKETCHMODE 5         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3  / 5 CN3A => this will enable the needed files for each mode... so choose your mode...
+
+
+LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
+
+#ifdef ENABLEWEBSERVER
+	byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
+														////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
+	byte ip[] = { 192, 168, 1, 179 };           //******** <------------------------CHANGE ARDOINOs IP TO YOUR NEEDs - DONT FORGET TO CHANGE IT EVERYWHERE (see comments WWW Content for PROGMEM) !!!!!!           
+	byte gateway[] = { 192, 168, 1, 40 };    //***** Define your routers gateway adress to the internet if needed
+	byte subnet[] = { 255, 255, 255, 0 };
+	/////////////////////////////// Change only if you know what you re doing....
+	EthernetServer server(80);                  //*************************************************** <------------------------CHANGE PORT, IF YOU DONT LIKE PORT 80           
+#endif
 											////////////////////////////// NO CHANGES HERE!!!!!
 boolean registersRx[4] = { 0, 0, 0, 0 };
 boolean registersTx[4] = { 0, 0, 0, 0 };
@@ -100,6 +111,12 @@ String txDisplayArray[7] = { "SUSA", "SAF", "SJA",  "SUSA+AF+JA", "SUSA+AF", "SA
 String rxDisplayArray[7] = { "SJ3W TOP", "SJ3W Middle", "SJ3W Bottom",  "STACK ALL", "STOP+SMid", "SMID+SBOT", "STOP+SBOT" };
 String txDisplayArray[7] = { "SJ3W tOP", "SJ3W middle", "SJ3W bottom",  "STACK all", "STOP+Smid", "Smid+Sbot", "Stop+Sbot" };
 #endif
+#if SKETCHMODE == 5
+String rxDisplayArray[7] = { "A1", "A2", "A3",  "ALL", "A1 + A2", "A1 + A3", "A2 + A3" };
+String txDisplayArray[7] = { "A1", "A2", "A3",  "STACK all", "Ant1 + Ant2", "Ant1 + Ant3", "Ant2 + Ant3" };
+#endif
+
+#ifdef ENABLEWEBSERVER
 /////////////////////////////////////// WWW Content for PROGMEM  CHANGE ONLY (URLs) IF YOU KNOW WHAT YOU ARE DOING!!! ////////////////////////////////////////////////////////////////////////////////////////////
 const char  message0[] PROGMEM = { "<html><head>" };
 const char  message1[] PROGMEM = { "<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.11.3.js\">" };      //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
@@ -119,6 +136,9 @@ const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h
 #endif
 #if SKETCHMODE == 4
 const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/sj2w_cs3.js'></script>" };          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
+#endif
+#if SKETCHMODE == 5
+const char  message4[] PROGMEM = { "<script type='text/javascript' src='http://h.mmmedia-online.de/cn3a.js'></script>" };          //******** Stack 3 And************ <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 #endif
 const char  message5[] PROGMEM = { "<link href=\"http://h.mmmedia-online.de/c.css\" rel=\"stylesheet\" type=\"text/css\"/>" };    //*************************************************** <------------------------CHANGE to your File-Location URL IF NEEDED !!!!!!
 const char  message6[] PROGMEM = { "<link rel = \"shortcut icon\" href=\"http://h.mmmedia-online.de/favicon.ico\">" };
@@ -154,6 +174,9 @@ const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.
 #if SKETCHMODE == 4
 const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
+#if SKETCHMODE == 5
+const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+#endif
 const char  message24[] PROGMEM = { "init();</script>" };
 const char  message25[] PROGMEM = { "</html>" };
 const byte webArraySize = 26;
@@ -186,6 +209,7 @@ const char * const messages[webArraySize] PROGMEM =
 	message24,
 	message25
 };
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 String requestString;
 const int ptt_InPin = 2;
@@ -223,9 +247,11 @@ void setup()
 	readFromEprom();
 	setupLCD();
 	setupRegisters();
-	Ethernet.begin(mac, ip); // Client starten
-	Serial.print("server is at ");
-	Serial.println(Ethernet.localIP());
+	#ifdef ENABLEWEBSERVER
+		Ethernet.begin(mac, ip); // Client starten
+		Serial.print("server is at ");
+		Serial.println(Ethernet.localIP());
+	#endif
 	attachInterrupt(0, setInterruptTxMode, CHANGE);
 }
 void readFromEprom()
@@ -272,6 +298,16 @@ void setupPinMode()
 }
 void setupRegisters()
 {
+	byte checkHowManyOn = 0;
+	
+	checkHowManyOn = verifyButtons(registersRxLed, 4);
+	if(checkHowManyOn == 3)
+		registersRxLed[3] = 1;
+	
+	checkHowManyOn = verifyButtons(registersTxLed, 4);
+	if(checkHowManyOn == 3)
+		registersTxLed[3] = 1;
+	
 	specialSetup();
 	writeDisplayRegister(registersRxLed);
 	writeRelayRegister(registersRx);
@@ -377,7 +413,10 @@ void loop()
 		}
 		oldButton = currentButton;
 		oldMode = isCurrentEditModeTX;
-		webServer();
+		
+		#ifdef ENABLEWEBSERVER
+			webServer();
+		#endif
 	}
 }
 /*------------------------------------------------------------------------------------------------------------------------*/
@@ -389,7 +428,7 @@ void loop()
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.95 190119 IP");
+	lcd.print("1.96 051119 IP");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
@@ -571,6 +610,12 @@ void triggerTXWorkflow()
 }
 void pttTriggerTX()
 {
+
+#ifdef DEBUG
+	Serial.print("isInTXEditMode ");
+	Serial.println(isInEditModeTX);
+#endif
+
 	isTransmitting = true;
 	if (isTransmitting != wasTransmittingBefore)
 	{
@@ -579,15 +624,25 @@ void pttTriggerTX()
 		writeRelayRegister(registersTx);
 	}
 	wasTransmittingBefore = isTransmitting;
+
+	// cn3a
+	if(isInEditModeTX)
+	{
+		isInEditModeTX = false;
+		switchArrow(false);
+		digitalWriteFast(txModeLedPin, HIGH);
+	}
 }
-void pttTriggerRX()
+
+/*void pttTriggerRX()
 {
+	isInEditModeTX = false;
 	isTransmitting = false;
 	wasTransmittingBefore = false;
 	isRxModeSet = false;
 	isTxModeSet = false;
 	isRxModeSet_old = true; // prevent next debouncePtt call from executing pttTriggerRX, because it was called before..
-}
+}*/
 // set pins for receiving
 void receiving()
 {
@@ -646,6 +701,8 @@ int getMyAverageValue()
 /*---- Example: http://192.168.1.180 for a simple get. -------------------------------------------------------------------*/
 /*---- Example: http://192.168.1.180/Set/1/0101 to Set 1 (TX) to 0101 (off-on-off-on), use 0 to set RX -------------------*/
 /*------------------------------------------------------------------------------------------------------------------------*/
+
+#ifdef ENABLEWEBSERVER
 void webServer()
 {
 	EthernetClient client = server.available();
@@ -727,7 +784,7 @@ void getStatus(EthernetClient client)
 	client.println("Access-Control-Allow-Origin: *");
 	client.println("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 	client.println("Access-Control-Allow-Headers: Authorization");
-	client.println();
+	client.println();isInEditModeTX
 	client.print("xx({\"v\": \"");
 	client.print(arrRx);
 	client.print("|");
@@ -756,6 +813,9 @@ void printProgStr(const char * str, EthernetClient client)
 	while ((c = pgm_read_byte(str++)))
 		client.print(c);
 }
+#endif
+
+
 // Writes to both of the registers directly - Remember: If you are calling the webserverm you have to take care about urself about button-switching logic and restrictions
 void writeToTheRegister(boolean regiA[], String theString)
 {
