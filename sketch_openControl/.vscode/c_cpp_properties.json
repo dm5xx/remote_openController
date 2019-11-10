@@ -5,7 +5,7 @@
             "includePath": [
                 "/home/werkstatt/Dokumente/arduino-1.8.6/tools/**",
                 "/home/werkstatt/Dokumente/arduino-1.8.6/hardware/arduino/avr/**",
-                "/home/werkstatt/Arduino/libraries/",
+                "/home/werkstatt/Arduino/libraries/**",
                 "/home/werkstatt/.arduino15/packages/arduino/hardware/avr/1.6.23/**"
             ],
             "forcedInclude": [

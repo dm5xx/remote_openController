@@ -46,7 +46,7 @@ remoteQth matrix:
 
 //#define ENABLEWEBSERVER
 
-#include "/home/werkstatt/Arduino/libraries/digitalWriteFast.h"
+#include <digitalWriteFast.h>
 #include <LiquidCrystal_I2C.h>
 
 #ifdef ENABLEWEBSERVER
@@ -428,7 +428,7 @@ void loop()
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.96 051119 IP");
+	lcd.print("1.96.1110 W");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
