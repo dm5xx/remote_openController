@@ -511,7 +511,7 @@ int balunpin = 4;
 	else
 		tempRegisters[3] = 0;
 	
-	if(counter == 3)
+	if(counter == 2 || counter == 3)
 		isInRelayInvertMode = true;
 	else
 		isInRelayInvertMode = false;	
