@@ -113,8 +113,8 @@ String rxDisplayArray[7] = { "SJ3W TOP", "SJ3W Middle", "SJ3W Bottom",  "STACK A
 String txDisplayArray[7] = { "SJ3W tOP", "SJ3W middle", "SJ3W bottom",  "STACK all", "STOP+Smid", "Smid+Sbot", "Stop+Sbot" };
 #endif
 #if SKETCHMODE == 5
-String rxDisplayArray[7] = { "A1", "A2", "A3",  "ALL", "A1 + A2", "A1 + A3", "A2 + A3" };
-String txDisplayArray[7] = { "A1", "A2", "A3",  "STACK all", "Ant1 + Ant2", "Ant1 + Ant3", "Ant2 + Ant3" };
+String rxDisplayArray[7] = { "A", "B", "C",  "ALL", "A + B", "A + C", "B + C" };
+String txDisplayArray[7] = { "a", "b", "c",  "all", "a + b", "a + c", "b + c" };
 #endif
 
 #ifdef ENABLEWEBSERVER
@@ -429,7 +429,7 @@ void loop()
 void displayVersion()
 {
 	resetDisplay();
-	lcd.print("1.96.1110 W");
+	lcd.print("1.96.1122.3 I5");
 	lcd.setCursor(0, 1);
 	lcd.print(" OK2ZAW & DM5XX");
 }
@@ -498,15 +498,30 @@ void writeRelayRegister(boolean registers[])
 		counter += registers[x]; // sum all who are on
 	}
 
-#if SKETCHMODE != 1
+int balunpin = 4; 
+
+#if SKETCHMODE != 1 && SKETCHMODE != 5
 	if(counter >1) // of more than 1 is on, switch on balun
 		tempRegisters[3] = 1; 
 #endif
+#if SKETCHMODE == 5
+	balunpin -= 1;
+	if(counter < 2) // of more than 1 is on, switch on balun
+		tempRegisters[3] = 1;
+	else
+		tempRegisters[3] = 0;
+	
+	if(counter == 3)
+		isInRelayInvertMode = true;
+	else
+		isInRelayInvertMode = false;	
+#endif
+
 
 	digitalWriteFast(STCP_pin, LOW);
 	for (int i = 7; i >= 0; i--)
 	{
-		if (i < 4 && isInRelayInvertMode)
+		if (i < balunpin && isInRelayInvertMode)
 		{
 			if (tempRegisters[i] == 0)
 				inverter = 1;
