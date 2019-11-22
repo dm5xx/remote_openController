@@ -126,7 +126,7 @@ void setDisplay(boolean regArry[], byte row)
 
 	if (counter == 0)
 	{
-		lcd.print("none");
+		lcd.print("all_single");
         return;
 	}
 

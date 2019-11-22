@@ -46,7 +46,8 @@ remoteQth matrix:
 
 //#define ENABLEWEBSERVER
 
-#include <digitalWriteFast.h>
+//#include "/home/werkstatt/Arduino/libraries/digitalWriteFast.h"
+#include "digitalWriteFast.h"
 #include <LiquidCrystal_I2C.h>
 
 #ifdef ENABLEWEBSERVER
