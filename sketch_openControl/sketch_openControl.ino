@@ -44,7 +44,7 @@ remoteQth matrix:
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>*/
 
-//#define ENABLEWEBSERVER
+#define ENABLEWEBSERVER
 
 #include <digitalWriteFast.h>
 #include <LiquidCrystal_I2C.h>
@@ -66,19 +66,19 @@ remoteQth matrix:
 #define D7_pin  3
 #define  LED_OFF  0
 #define  LED_ON  1
-//#define DEBUG
+#define DEBUG
 
 const byte epromAddresses[] = { 0,1,2,3,4,5,6,7 };
-#define SKETCHMODE 5         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3  / 5 CN3A => this will enable the needed files for each mode... so choose your mode...
+#define SKETCHMODE 1         // 0 = multibeaming / 1 = stack2 / 2 = stack3  / 3 = sj2w_multibeaming / 4 = sj2w stack3  / 5 CN3A => this will enable the needed files for each mode... so choose your mode...
 
 
 LiquidCrystal_I2C  lcd(I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
-
+//LiquidCrystal_I2C lcd(I2C_ADDR,16,2);
 #ifdef ENABLEWEBSERVER
 	byte mac[] = { 0xDE, 0x7D, 0xBE, 0xEF, 0xFE, 0xED };  //**************************************** <-------------------------CHANGE MAC-ADRESS IF YOU HAVE MORE THAN 1 CONTROLLER
 														////////////////////////////////   CONFIGURE YOUR DEFAULT DETTINGS HERE   /////////////////////////////////////////////
-	byte ip[] = { 192, 168, 1, 179 };           //******** <------------------------CHANGE ARDOINOs IP TO YOUR NEEDs - DONT FORGET TO CHANGE IT EVERYWHERE (see comments WWW Content for PROGMEM) !!!!!!           
-	byte gateway[] = { 192, 168, 1, 40 };    //***** Define your routers gateway adress to the internet if needed
+	byte ip[] = { 192, 168, 97, 179 };           //******** <------------------------CHANGE ARDOINOs IP TO YOUR NEEDs - DONT FORGET TO CHANGE IT EVERYWHERE (see comments WWW Content for PROGMEM) !!!!!!           
+	byte gateway[] = { 192, 168, 97, 40 };    //***** Define your routers gateway adress to the internet if needed
 	byte subnet[] = { 255, 255, 255, 0 };
 	/////////////////////////////// Change only if you know what you re doing....
 	EthernetServer server(80);                  //*************************************************** <------------------------CHANGE PORT, IF YOU DONT LIKE PORT 80           
@@ -160,23 +160,24 @@ const char  message21[] PROGMEM = { "</div>" };
 const char  message22[] PROGMEM = { " " };
 //// DONT FORGET TO CHANGE THE INTERNAL ARDUINO IP....//////////////////////////////////////////////////
 #if SKETCHMODE == 0
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Multibeaming************ <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 1
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 2
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 3
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/multi.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 4
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
 #if SKETCHMODE == 5
-const char  message23[] PROGMEM = { "<script>var urlToArduino='http://192.168.1.179';\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
+const char  message23[] PROGMEM = { "\t\n$('#container').css(\"background-image\", \"url(http://h.mmmedia-online.de/stack.png)\"); " }; //********UNCOMMENT/COMMENT NEEDED VERSION: Stack***************** <------------------------CHANGE to Arduino AND File-Location URL IF NEEDED !!!!!!
 #endif
+
 const char  message24[] PROGMEM = { "init();</script>" };
 const char  message25[] PROGMEM = { "</html>" };
 const byte webArraySize = 26;
@@ -318,8 +319,8 @@ void setupRegisters()
 void setupLCD()
 {
 	lcd.begin(16, 2); // initialize the lcd
-	lcd.setBacklightPin(BACKLIGHT_PIN, NEGATIVE);
-	lcd.setBacklight(LED_ON);
+	//lcd.setBacklightPin(BACKLIGHT_PIN, NEGATIVE);
+	//lcd.setBacklight(LED_ON);
 	displayWelcomeText();
 	betterDelay(2000);
 	displayVersion();
@@ -780,11 +781,11 @@ void getStatus(EthernetClient client)
 	String arrTx = convertArrayToString(registersTx);
 	String arrRx = convertArrayToString(registersRx);
 	client.println("HTTP/1.1 200 OK"); //send new page
-	client.println("Content-Type: text/html");
+	client.println("Content-Type: text/javascript");
 	client.println("Access-Control-Allow-Origin: *");
 	client.println("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 	client.println("Access-Control-Allow-Headers: Authorization");
-	client.println();isInEditModeTX
+	client.println();
 	client.print("xx({\"v\": \"");
 	client.print(arrRx);
 	client.print("|");
@@ -801,6 +802,12 @@ void getPage(EthernetClient client)
 	client.println();
 	for (int i = 0; i < webArraySize; i++)
 	{
+    if(i==23)
+    {
+      client.print("<script>var urlToArduino='http://");
+      client.print(Ethernet.localIP());
+      client.println("';");
+    }
 		printProgStr((const char *)pgm_read_word(&messages[i]), client);
 		client.println();
 	}

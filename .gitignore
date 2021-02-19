@@ -6,6 +6,10 @@
 *.user
 *.userosscache
 *.sln.docstates
+*/desktop.ini
+desktop.ini
+readme.txt
+*/readme.txt
 
 # Build results
 [Dd]ebug/
