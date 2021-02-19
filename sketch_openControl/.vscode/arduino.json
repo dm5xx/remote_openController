@@ -3,5 +3,5 @@
     "configuration": "cpu=atmega328old",
     "sketch": "sketch_openControl.ino",
     "programmer": "AVRISP mkII",
-    "port": "/dev/ttyUSB0"
+    "port": "COM7"
 }
